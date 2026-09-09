@@ -1,7 +1,9 @@
 # Treemap
 
-**Use for:** nested proportions of hierarchical data (budget allocations, disk usage, market share by category then sub-category).
-**Avoid for:** negative values (unsupported), very deep hierarchies (readability drops fast), or when a simple flat pie/bar chart would do (use `pie-chart.md` or `xy-chart.md` when there's no real hierarchy).
+**Use for:** nested proportions of hierarchical data (budget allocations, disk usage,
+market share by category then sub-category).
+**Avoid for:** negative values (unsupported), very deep hierarchies (readability drops fast),
+or when a simple flat pie/bar chart would do (use `pie-chart.md` or `xy-chart.md` when there's no real hierarchy).
 
 ## Core syntax
 
@@ -39,8 +41,10 @@ treemap-beta
 ```
 <img src="rendered/treemap--block2.svg" alt="treemap--block2" width=1000px/>
 
-`valueFormat` uses D3 format specifiers (`,` thousands separator, `.1f` one decimal, `.1%` percentage, `$0,0` currency with separator, and combinations).
+`valueFormat` uses D3 format specifiers (`,` thousands separator, `.1f` one decimal,
+`.1%` percentage, `$0,0` currency with separator, and combinations).
 
 ## Configuration
 
-`config.treemap` also covers `padding`/`diagramPadding` (spacing), `showValues`, `nodeWidth`/`nodeHeight`, `valueFontSize`/`labelFontSize`, and `useMaxWidth`.
+`config.treemap` also covers `padding`/`diagramPadding` (spacing), `showValues`,
+`nodeWidth`/`nodeHeight`, `valueFontSize`/`labelFontSize`, and `useMaxWidth`.

@@ -4,11 +4,14 @@ Generic conventions for drawing Mermaid diagrams in technical documentation.
 Palette, edge syntax, diagram-type selection, and detail-level guidance.
 Validated against a weaker model to confirm it can follow this standard unsupervised and produce diagrams that render correctly.
 
-**How to read this doc:** every pattern has **Source** (raw Mermaid to copy) then **Rendered** (live diagram). Tables and prose have no rendered block.
+**How to read this doc:** every pattern has **Source** (raw Mermaid to copy) then **Rendered** (live diagram).
+Tables and prose have no rendered block.
 
-**Renderer assumption:** examples target Mermaid 11.x (edge IDs, `@{ curve: ... }`). For an older renderer, see [linkStyle fallback](#linkstyle-fallback-only).
+**Renderer assumption:** examples target Mermaid 11.x (edge IDs, `@{ curve: ... }`).
+For an older renderer, see [linkStyle fallback](#linkstyle-fallback-only).
 
-For full per-type syntax, see the sibling reference files in this folder (`flowchart.md`, `sequence-diagram.md`, etc.) and the top-level `SKILL.md` selection table.
+For full per-type syntax, see the sibling reference files in this folder (`flowchart.md`,
+`sequence-diagram.md`, etc.) and the top-level `SKILL.md` selection table.
 
 ---
 
@@ -19,9 +22,12 @@ For full per-type syntax, see the sibling reference files in this folder (`flowc
 | **Birds-eye** (operator, PM, new team member) | Where does data go? Who talks to whom? | `flowchart LR` with **subgraphs**, or `C4Context` | 6-10 nodes target, 12 max; group by *phase*, not by *class/module* | Plain language: "Collect", "Process queue", "Customer API" |
 | **Technical** (implementer, debugger) | Exact services, queues, code paths | `flowchart` with full palette + edge IDs, or `sequenceDiagram` | Named services, queue/table names, function/API calls | Exact identifiers: `OrderWorker_01`, `IngestQueue_BASE` |
 
-**Rule:** one doc may contain **both**, birds-eye first (§ Overview), technical second (§ Detail). Don't merge into one overcrowded chart.
+**Rule:** one doc may contain **both**, birds-eye first (§ Overview), technical second (§ Detail).
+Don't merge into one overcrowded chart.
 
-**Before drawing:** state the audience in `accDescr` or a one-line caption. If the goal is onboarding or discovery, default to birds-eye unless the task is debugging a specific path.
+**Before drawing:** state the audience in `accDescr` or a one-line caption.
+If the goal is onboarding or discovery,
+default to birds-eye unless the task is debugging a specific path.
 
 ---
 
@@ -43,7 +49,9 @@ For full per-type syntax, see the sibling reference files in this folder (`flowc
 | Folder/map of docs or components | `mindmap` | Runtime data flow |
 | Git/branch strategy | `gitGraph` | Deployment topology |
 
-**Beta types** (`block-beta`, `packet-beta`, `sankey-beta`, `architecture-beta`, and others): confirm render support on the target platform before using in canonical docs. Prefer stable types otherwise.
+**Beta types** (`block-beta`, `packet-beta`, `sankey-beta`, `architecture-beta`, and others):
+confirm render support on the target platform before using in canonical docs.
+Prefer stable types otherwise.
 
 ---
 
@@ -51,17 +59,28 @@ For full per-type syntax, see the sibling reference files in this folder (`flowc
 
 ### Birds-eye flowchart
 
-**When:** onboarding docs, component overview, executive summary, "how does data move through this system."
+**When:** onboarding docs, component overview, executive summary,
+"how does data move through this system."
 
 **How:**
 
 - `flowchart LR` or `TB`, left-to-right reads as a pipeline.
 - **Subgraphs = phases** (Collect, Process, Store, Deliver), not project folders or class names.
-- **6-10 nodes** across all subgraphs combined. Collapse duplicate *instances* of the same thing ("Workers" not `Worker01`, `Worker02`) unless the doc is specifically about scaling. Don't collapse genuinely distinct types into one node just to save a slot; if the diagram's point is a relationship *between* two kinds of client app, each kind needs its own node, or that relationship disappears.
-- **Edges:** solid for the main path; dotted only to external systems. Skip edge colors, or use one accent, readability beats full convention compliance on overview charts.
+- **6-10 nodes** across all subgraphs combined.
+  Collapse duplicate *instances* of the same thing ("Workers" not `Worker01`,
+  `Worker02`) unless the doc is specifically about scaling.
+  Don't collapse genuinely distinct types into one node just to save a slot;
+  if the diagram's point is a relationship *between* two kinds of client app,
+  each kind needs its own node, or that relationship disappears.
+- **Edges:** solid for the main path; dotted only to external systems.
+  Skip edge colors, or use one accent,
+  readability beats full convention compliance on overview charts.
 - **Edge labels:** verb phrases (`enqueue`, `write to DB`, `send to partner`).
 - Add `accTitle` + `accDescr` for accessibility.
-- **Don't invent relationships.** Only draw edges the source material actually states. If the trigger between two phases isn't documented, name the edge for what the phase *does* (`queue next stage`), not for a guessed mechanism.
+- **Don't invent relationships.**
+  Only draw edges the source material actually states.
+  If the trigger between two phases isn't documented,
+  name the edge for what the phase *does* (`queue next stage`), not for a guessed mechanism.
 
 #### Worked example
 
@@ -139,12 +158,16 @@ No node palette applied here, birds-eye diagrams may skip it entirely.
 
 ### Technical flowchart
 
-**When:** debugging a queue, documenting a new service hook, a change that alters enqueue/consume paths.
+**When:** debugging a queue, documenting a new service hook,
+a change that alters enqueue/consume paths.
 
 **How:**
 
-- Apply the [full palette](#node-color-palette): `producer`, `queue`, `consumer`, `external`, `client`, `standalone`.
-- **One link per line.** Never `A & B & C ==> D` when each arrow needs its own color, see [split compound edges](#split-compound-edges).
+- Apply the [full palette](#node-color-palette): `producer`, `queue`, `consumer`, `external`,
+  `client`, `standalone`.
+- **One link per line.**
+  Never `A & B & C ==> D` when each arrow needs its own color,
+  see [split compound edges](#split-compound-edges).
 - **Arrow syntax:** `==>` enqueue, `-->` consume/trigger, `-.->` external dependency.
 - **Edge colors:** edge IDs by default, `Source id@==> Target` then `class id edgeEnqueue`.
 - **Every edge styled**, no default black on critical paths.
@@ -223,7 +246,8 @@ flowchart LR
 ## Node color palette
 
 Medium-lightness fills, darker strokes, explicit text `color` on every `classDef`.
-Mermaid does not adapt to viewer theme, so labels must contrast with the fill in both light and dark mode.
+Mermaid does not adapt to viewer theme,
+so labels must contrast with the fill in both light and dark mode.
 
 | Role | classDef name | Fill | Stroke | Color (text) | Use for |
 |------|----------------|------|--------|--------------|---------|
@@ -235,9 +259,16 @@ Mermaid does not adapt to viewer theme, so labels must contrast with the fill in
 | **Standalone / special** | `standalone` | `#ce93d8` | `#7b1fa2` | `#4a148c` | Notification/communication services, job drivers, anything distinct from a producer. |
 | **Service group** | `service` | `#b39ddb` | `#5e35b1` | `#311b92` | Group box for "our" services in dependency-boundary views. |
 
-`client` vs. `external`: if the node is a first-party application built and shipped in-house, even if, from one diagram's narrow scope, it sits outside the pipeline being documented, use `client`, not `external`. Reserve `external` for systems outside the organization's ownership (third-party APIs, a partner's infrastructure, a database or file share treated as a boundary). This distinction matters most on diagrams that need to show *which* of several first-party apps talks to what, collapsing them into `external` erases that.
+`client` vs. `external`: if the node is a first-party application built and shipped in-house,
+even if, from one diagram's narrow scope, it sits outside the pipeline being documented,
+use `client`, not `external`.
+Reserve `external` for systems outside the organization's ownership (third-party APIs,
+a partner's infrastructure, a database or file share treated as a boundary).
+This distinction matters most on diagrams that need to show *which* of several first-party apps talks to what,
+collapsing them into `external` erases that.
 
-Omit unused roles. Always include `color`.
+Omit unused roles.
+Always include `color`.
 
 ### Source
 
@@ -288,13 +319,15 @@ class Worker1,Worker2 consumer
 class DB external
 ```
 
-Trailing `class` statements are preferred when grouping several nodes under one role at once, see [split compound edges](#split-compound-edges) for the same pattern applied to edges.
+Trailing `class` statements are preferred when grouping several nodes under one role at once,
+see [split compound edges](#split-compound-edges) for the same pattern applied to edges.
 
 ---
 
 ## Edge styling, edge IDs (default)
 
-Prefer edge IDs for per-edge colors. Color binds to the edge by identity, not definition order.
+Prefer edge IDs for per-edge colors.
+Color binds to the edge by identity, not definition order.
 
 ### Syntax reference
 
@@ -319,9 +352,12 @@ Prefer edge IDs for per-edge colors. Color binds to the edge by identity, not de
 | `edgeData` | `#b0b0b0` | 1.5px | Internal data handoff (dark-theme variant) |
 | `edgeExtLight` | `#64b5f6` | 1.5px | External boundary (dark-theme variant) |
 
-`edgeSend` vs. `edgeExternal`: use `edgeSend` when the edge represents actively delivering something to a recipient (an invoice email, a push notification, a customer-facing message), the emphasis is "we are sending."
-Use `edgeExternal` when the edge represents a dependency or lookup, the emphasis is "this exists outside our system and we rely on it."
-Both are typically dotted; the color, not the arrow shape, carries the distinction.
+`edgeSend` vs. `edgeExternal`:
+use `edgeSend` when the edge represents actively delivering something to a recipient (an invoice email,
+a push notification, a customer-facing message),
+the emphasis is "we are sending." Use `edgeExternal` when the edge represents a dependency or lookup,
+the emphasis is "this exists outside our system and we rely on it." Both are typically dotted;
+the color, not the arrow shape, carries the distinction.
 
 ```
 classDef edgeEnqueue stroke:#1565c0,stroke-width:2px
@@ -335,7 +371,9 @@ classDef edgeExtLight stroke:#64b5f6,stroke-width:1.5px
 
 ## Arrow type by connection
 
-Arrow **shape** = connection kind. Edge **color** = which flow. Use both on technical diagrams.
+Arrow **shape** = connection kind.
+Edge **color** = which flow.
+Use both on technical diagrams.
 
 | Connection type | Syntax | Edge class (typical) |
 |-----------------|--------|----------------------|
@@ -349,7 +387,8 @@ Arrow **shape** = connection kind. Edge **color** = which flow. Use both on tech
 
 ## Split compound edges
 
-Don't use `A & B & C ==> Q` when each arrow needs its own color, index-based styling is fragile. Split into one link per line with edge IDs, then group the `class` statement:
+Don't use `A & B & C ==> Q` when each arrow needs its own color, index-based styling is fragile.
+Split into one link per line with edge IDs, then group the `class` statement:
 
 ### Source (avoid)
 
@@ -369,7 +408,8 @@ class e1,e2,e3 edgeEnqueue
 class e4 edgeConsume
 ```
 
-This applies to any fan-in (multiple producers into one queue) or fan-out (one source triggering several nodes), group every edge sharing a color into a single `class` line, per the ID list.
+This applies to any fan-in (multiple producers into one queue) or fan-out (one source triggering several nodes),
+group every edge sharing a color into a single `class` line, per the ID list.
 
 ---
 
@@ -390,7 +430,8 @@ Include at the top of the diagram block, before `classDef` and nodes.
 
 ## Edge curve override (Mermaid 11.10+)
 
-Optional. Place after the link line.
+Optional.
+Place after the link line.
 
 ```
 Driver[Job driver]:::standalone
@@ -407,7 +448,9 @@ eRetry@{ curve: natural }
 
 ## `linkStyle` (fallback only)
 
-Use only when edge IDs aren't supported by the renderer, or when maintaining an older diagram that hasn't been migrated. Indices **0, 1, 2, ...** differ across renderers, document index-to-color in a caption if kept.
+Use only when edge IDs aren't supported by the renderer,
+or when maintaining an older diagram that hasn't been migrated.
+Indices **0, 1, 2, ...** differ across renderers, document index-to-color in a caption if kept.
 
 **Don't use `linkStyle` for new diagrams** if the renderer supports edge IDs.
 
@@ -433,7 +476,8 @@ flowchart LR
 
 ## Detail level ladder
 
-Use the **lowest** rung that answers the reader's question. Link down, not up.
+Use the **lowest** rung that answers the reader's question.
+Link down, not up.
 
 ```
 L0  C4Context or 5-node birds-eye flowchart     "What is this system?"
@@ -455,15 +499,20 @@ L4  Packet/format diagrams, exact call/line refs  "Byte/layout/exactness"
 
 ## Agent checklist, before adding a diagram
 
-1. **Audience:** birds-eye or technical? (If unclear, add both as separate diagrams.)
-2. **Question:** flow, time order, structure, state, schema, or volume? → pick a type from [Pick a diagram type](#pick-a-diagram-type).
-3. **Node budget:** birds-eye 6-10 nodes (12 max); technical 20 or fewer, or split into two diagrams.
+1. **Audience:** birds-eye or technical?
+   (If unclear, add both as separate diagrams.)
+2. **Question:** flow, time order, structure, state, schema,
+   or volume? → pick a type from [Pick a diagram type](#pick-a-diagram-type).
+3. **Node budget:** birds-eye 6-10 nodes (12 max); technical 20 or fewer,
+   or split into two diagrams.
 4. **Naming:** birds-eye = phase/plain language; technical = grep-friendly, exact identifiers.
-5. **Styling:** technical flowchart → full palette above; birds-eye → subgraphs OK, palette optional.
+5. **Styling:** technical flowchart → full palette above; birds-eye → subgraphs OK,
+   palette optional.
 6. **Ordering:** declare all `classDef`s first, before nodes and edges.
 7. **Caption:** one-line legend (as an in-diagram `%%` comment) if colors/arrows encode meaning.
 8. **accTitle / accDescr:** set on overview/canonical diagrams.
-9. **Placement:** diagram *after* one sentence saying what it shows, not instead of prose for non-obvious behaviour.
+9. **Placement:** diagram *after* one sentence saying what it shows,
+   not instead of prose for non-obvious behaviour.
 10. **Update:** diagram changes land in the same change/PR as the behaviour change it documents.
 
 ---

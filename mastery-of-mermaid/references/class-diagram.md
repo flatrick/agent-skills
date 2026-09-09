@@ -1,7 +1,9 @@
 # Class diagram
 
-**Use for:** object-oriented design, domain modeling, entity relationships expressed as types rather than database tables.
-**Avoid for:** a non-developer audience (use a birds-eye flowchart instead) or database schemas that map directly to tables (use `erd.md`, which shows columns/keys more naturally).
+**Use for:** object-oriented design, domain modeling,
+entity relationships expressed as types rather than database tables.
+**Avoid for:** a non-developer audience (use a birds-eye flowchart instead) or database schemas that map directly to tables (use `erd.md`,
+which shows columns/keys more naturally).
 
 ## Core syntax
 
@@ -19,9 +21,12 @@ classDiagram
 ```
 <img src="rendered/class-diagram--block1.svg" alt="class-diagram--block1" width=250px/>
 
-Visibility modifiers: `+` public, `-` private, `#` protected, `~` package/internal. A method ending in `*` is abstract (`draw()*`); ending in `$` is static (`someStaticMethod()$`). Mermaid tells attributes from methods by the presence of `()`.
+Visibility modifiers: `+` public, `-` private, `#` protected, `~` package/internal.
+A method ending in `*` is abstract (`draw()*`); ending in `$` is static (`someStaticMethod()$`).
+Mermaid tells attributes from methods by the presence of `()`.
 
-Define members one at a time (`ClassName : +type name`) or grouped in `{}`. Optional return type goes after the closing `)` with a space: `+deposit(amount) bool`.
+Define members one at a time (`ClassName : +type name`) or grouped in `{}`.
+Optional return type goes after the closing `)` with a space: `+deposit(amount) bool`.
 
 ## Generics
 
@@ -36,7 +41,9 @@ classDiagram
 ```
 <img src="rendered/class-diagram--block2.svg" alt="class-diagram--block2" width=200px/>
 
-Wrap a generic type parameter in `~tilde~`. Nested generics (`List~List~int~~`) work; generics containing a comma don't. The generic part is not part of the class name for reference purposes.
+Wrap a generic type parameter in `~tilde~`.
+Nested generics (`List~List~int~~`) work; generics containing a comma don't.
+The generic part is not part of the class name for reference purposes.
 
 ## Relationships
 
@@ -51,7 +58,9 @@ Wrap a generic type parameter in `~tilde~`. Nested generics (`List~List~int~~`) 
 | `A ..|> B` | Realization/implements |
 | `A .. B` | Link, dashed |
 
-Add a label: `Customer --> Order : places`. Add multiplicity/cardinality on either end: `Customer "1" --> "0..*" Order : places`. Common values: `1`, `0..1`, `1..*`, `*`/`0..*`, `m..n`.
+Add a label: `Customer --> Order : places`.
+Add multiplicity/cardinality on either end: `Customer "1" --> "0..*" Order : places`.
+Common values: `1`, `0..1`, `1..*`, `*`/`0..*`, `m..n`.
 
 Two-way relations combine a relation type on each side: `Animal <|--|> Zebra`.
 
@@ -80,7 +89,8 @@ classDiagram
 ```
 <img src="rendered/class-diagram--block3.svg" alt="class-diagram--block3" width=500px/>
 
-Common stereotypes: `<<interface>>`, `<<abstract>>`, `<<service>>`, `<<enumeration>>`, and DDD ones like `<<entity>>`, `<<value object>>`, `<<aggregate root>>`.
+Common stereotypes: `<<interface>>`, `<<abstract>>`, `<<service>>`, `<<enumeration>>`,
+and DDD ones like `<<entity>>`, `<<value object>>`, `<<aggregate root>>`.
 
 ## Namespaces
 
@@ -97,7 +107,8 @@ classDiagram
 ```
 <img src="rendered/class-diagram--block4.svg" alt="class-diagram--block4" width=200px/>
 
-Namespaces group classes visually and can be dot-nested (`namespace Company.Engineering.Backend { ... }`) or syntactically nested (a `namespace` block inside another). Give a namespace a display label with `namespace id["Display Label"]`.
+Namespaces group classes visually and can be dot-nested (`namespace Company.Engineering.Backend { ... }`) or syntactically nested (a `namespace` block inside another).
+Give a namespace a display label with `namespace id["Display Label"]`.
 
 ## Notes, direction, styling
 
@@ -114,11 +125,13 @@ classDiagram
 ```
 <img src="rendered/class-diagram--block5.svg" alt="class-diagram--block5" width=250px/>
 
-`direction` (`TB`, `BT`, `LR`, `RL`) sets layout direction. `style`/`classDef`/`class`/`:::` work the same as in flowcharts.
+`direction` (`TB`, `BT`, `LR`, `RL`) sets layout direction.
+`style`/`classDef`/`class`/`:::` work the same as in flowcharts.
 
 ## Common pitfalls
 
-- Class names support alphanumerics, underscores, and dashes only; escape anything else with backtick-quoted labels: `` class `Animal Class!` ``.
+- Class names support alphanumerics, underscores, and dashes only;
+  escape anything else with backtick-quoted labels: `` class `Animal Class!` ``.
 - Mermaid does not support two classes with the same name but different generic type parameters.
 - `cssClass` shorthand (`:::className`) cannot be combined on the same line as a relation statement.
 - Notes and namespaces can't be individually styled with `style`, only via themes.

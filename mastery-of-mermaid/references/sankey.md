@@ -1,6 +1,7 @@
 # Sankey diagram
 
-**Use for:** flow or volume moving between categories, energy conversion, budget allocation, funnel/conversion tracking.
+**Use for:** flow or volume moving between categories, energy conversion, budget allocation,
+funnel/conversion tracking.
 **Avoid for:** exact routing logic where discrete named connections matter more than proportional flow (use a flowchart).
 
 **Experimental:** syntax is close to plain CSV and may be extended in future Mermaid releases.
@@ -38,5 +39,7 @@ Set under `config.sankey`:
 
 ## Common pitfalls
 
-- A value containing a comma must be quoted: `Pumped heat,"Heating and cooling, homes",193.026`; an unquoted comma is parsed as an extra CSV column and breaks the row.
-- A literal double quote inside a quoted value is escaped by doubling it: `"Heating and cooling, ""homes"""`.
+- A value containing a comma must be quoted: `Pumped heat,"Heating and cooling, homes",193.026`;
+  an unquoted comma is parsed as an extra CSV column and breaks the row.
+- A literal double quote inside a quoted value is escaped by doubling it:
+  `"Heating and cooling, ""homes"""`.

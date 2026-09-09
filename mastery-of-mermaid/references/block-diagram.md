@@ -1,6 +1,7 @@
 # Block diagram
 
-**Use for:** system/network/electrical diagrams where you need full manual control over node position, unlike a flowchart, Mermaid's auto-layout never moves a block diagram's shapes.
+**Use for:** system/network/electrical diagrams where you need full manual control over node position,
+unlike a flowchart, Mermaid's auto-layout never moves a block diagram's shapes.
 **Avoid for:** anything where automatic layout is preferable (a regular flowchart is usually less work).
 
 ## Core syntax
@@ -31,11 +32,16 @@ block
 ```
 <img src="rendered/block-diagram--block2.svg" alt="block-diagram--block2" width=600px/>
 
-`block:ID ... end` nests a group of blocks inside a parent block, useful for representing a server with multiple services, or any part-of hierarchy. A single-column nested block (`columns 1`) stacks its children vertically, effectively merging them into one tall block.
+`block:ID ... end` nests a group of blocks inside a parent block,
+useful for representing a server with multiple services, or any part-of hierarchy.
+A single-column nested block (`columns 1`) stacks its children vertically,
+effectively merging them into one tall block.
 
 ## Shapes
 
-Block diagrams reuse the flowchart shape vocabulary: `id("rounded")`, `id(["stadium"])`, `id[["subroutine"]]`, `id[("cylinder")]`, `id(("circle"))`, `id>"asymmetric"]`, `id{"rhombus"}`, `id{{"hexagon"}}`, `id[/"parallelogram"/]`, `id[\"parallelogram-alt"\]`, `id((("double circle")))`.
+Block diagrams reuse the flowchart shape vocabulary: `id("rounded")`, `id(["stadium"])`,
+`id[["subroutine"]]`, `id[("cylinder")]`, `id(("circle"))`, `id>"asymmetric"]`, `id{"rhombus"}`,
+`id{{"hexagon"}}`, `id[/"parallelogram"/]`, `id[\"parallelogram-alt"\]`, `id((("double circle")))`.
 
 ## Block arrows and space blocks
 
@@ -47,7 +53,8 @@ block
 ```
 <img src="rendered/block-diagram--block3.svg" alt="block-diagram--block3" width=300px/>
 
-Block arrows point `right`, `left`, `up`, `down`, or diagonally (`x`, `y`, or combined like `x, down`), useful as directional connectors between rows without a full edge.
+Block arrows point `right`, `left`, `up`, `down`, or diagonally (`x`, `y`,
+or combined like `x, down`), useful as directional connectors between rows without a full edge.
 
 ## Connecting blocks
 
@@ -59,7 +66,10 @@ block
 ```
 <img src="rendered/block-diagram--block4.svg" alt="block-diagram--block4" width=200px/>
 
-Same arrow vocabulary as flowcharts (`-->`, `--`, labeled with `-- "text" -->`). Because block diagrams provide full position control, a `space` is required between two blocks that need to be linked but aren't adjacent in the grid, otherwise there's no room to draw the edge.
+Same arrow vocabulary as flowcharts (`-->`, `--`, labeled with `-- "text" -->`).
+Because block diagrams provide full position control,
+a `space` is required between two blocks that need to be linked but aren't adjacent in the grid,
+otherwise there's no room to draw the edge.
 
 ## Styling
 
@@ -67,5 +77,8 @@ Same arrow vocabulary as flowcharts (`-->`, `--`, labeled with `-- "text" -->`).
 
 ## Common pitfalls
 
-- Forgetting a `space` between blocks you intend to connect with an edge is the most common syntax error (`A - B` is invalid; use `A space B` then `A --> B`).
-- Column width auto-adjusts to the widest block in that column; a single very wide label can push the whole column wider than expected. Use explicit `:N` spans to compensate.
+- Forgetting a `space` between blocks you intend to connect with an edge is the most common syntax error (`A - B` is invalid;
+  use `A space B` then `A --> B`).
+- Column width auto-adjusts to the widest block in that column;
+  a single very wide label can push the whole column wider than expected.
+  Use explicit `:N` spans to compensate.

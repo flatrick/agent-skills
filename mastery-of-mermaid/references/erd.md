@@ -1,6 +1,7 @@
 # Entity relationship diagram (ERD)
 
-**Use for:** database schemas, table relationships, data modeling, both abstract logical models and physical relational-table models.
+**Use for:** database schemas, table relationships, data modeling,
+both abstract logical models and physical relational-table models.
 **Avoid for:** non-database flows or a non-technical audience (use a birds-eye flowchart).
 
 ## Core syntax
@@ -24,7 +25,9 @@ erDiagram
 ```
 <img src="rendered/erd--block1.svg" alt="erd--block1" width=250px/>
 
-Only the first entity in a statement is mandatory, letting you declare a bare entity (`CUSTOMER`) with no relationship, useful while iterating. Entity names conventionally use UPPERCASE and singular nouns (`CUSTOMER` not `CUSTOMERS`).
+Only the first entity in a statement is mandatory,
+letting you declare a bare entity (`CUSTOMER`) with no relationship, useful while iterating.
+Entity names conventionally use UPPERCASE and singular nouns (`CUSTOMER` not `CUSTOMERS`).
 
 ## Cardinality
 
@@ -37,9 +40,13 @@ Each side of a relationship has an outer character (maximum) and inner character
 | `}o` | `o{` | Zero or more |
 | `}\|` | `\|{` | One or more |
 
-Combine for the common cases: `||--o{` (one-to-many), `||--||` (one-to-one), `}o--o{` (many-to-many). English aliases also work (`CAR 1 to zero or more NAMED-DRIVER : allows`).
+Combine for the common cases: `||--o{` (one-to-many), `||--||` (one-to-one),
+`}o--o{` (many-to-many).
+English aliases also work (`CAR 1 to zero or more NAMED-DRIVER : allows`).
 
-Line style carries meaning too: `--` (solid) is an *identifying* relationship (the child can't exist without the parent); `..` (dashed) is *non-identifying* (both can exist independently).
+Line style carries meaning too:
+`--` (solid) is an *identifying* relationship (the child can't exist without the parent);
+`..` (dashed) is *non-identifying* (both can exist independently).
 
 ## Attributes and keys
 
@@ -56,7 +63,10 @@ erDiagram
 ```
 <img src="rendered/erd--block2.svg" alt="erd--block2" width=400px/>
 
-Attribute format is `type name [key] ["comment"]`. Keys: `PK` (primary), `FK` (foreign), `UK` (unique); combine with a comma (`PK, FK`). A trailing quoted string is a free-form comment/constraint note. Optional/nullable types can end in `?` (`string? middleName`, v11.16+).
+Attribute format is `type name [key] ["comment"]`.
+Keys: `PK` (primary), `FK` (foreign), `UK` (unique); combine with a comma (`PK, FK`).
+A trailing quoted string is a free-form comment/constraint note.
+Optional/nullable types can end in `?` (`string? middleName`, v11.16+).
 
 ## Aliases, unicode, markdown
 
@@ -73,7 +83,9 @@ erDiagram
 ```
 <img src="rendered/erd--block3.svg" alt="erd--block3" width=200px/>
 
-Square-bracket aliases display a friendlier name than the internal identifier. Entity names, relationships, and attributes support unicode and basic markdown formatting when quoted.
+Square-bracket aliases display a friendlier name than the internal identifier.
+Entity names, relationships,
+and attributes support unicode and basic markdown formatting when quoted.
 
 ## Direction, subgraphs, styling
 
@@ -87,14 +99,20 @@ erDiagram
 ```
 <img src="rendered/erd--block4.svg" alt="erd--block4" width=300px/>
 
-`direction` sets `TB`/`BT`/`LR`/`RL`. Subgraphs (v11+) group entities and can be nested; reference a subgraph by its `id`, quoting it if it contains spaces. `style`/`classDef`/`class`/`:::` styling works the same as flowcharts.
+`direction` sets `TB`/`BT`/`LR`/`RL`.
+Subgraphs (v11+) group entities and can be nested; reference a subgraph by its `id`,
+quoting it if it contains spaces.
+`style`/`classDef`/`class`/`:::` styling works the same as flowcharts.
 
 ## Common pitfalls
 
-- Omit FK attributes in a purely logical model (relationship lines already convey the association); include them in a model meant to mirror physical tables.
+- Omit FK attributes in a purely logical model (relationship lines already convey the association);
+  include them in a model meant to mirror physical tables.
 - Junction/many-to-many relationships are clearer modeled explicitly with a join entity (see `common-patterns.md`) than left as a bare `}o--o{`.
-- Match attribute types to the real database's types, not generic placeholders, when documenting an actual schema.
+- Match attribute types to the real database's types, not generic placeholders,
+  when documenting an actual schema.
 
 ## Common patterns
 
-See `common-patterns.md` for self-referencing (hierarchical), junction-table, polymorphic, soft-delete, and audit-trail ER shapes.
+See `common-patterns.md` for self-referencing (hierarchical), junction-table, polymorphic,
+soft-delete, and audit-trail ER shapes.

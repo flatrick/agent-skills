@@ -1,7 +1,9 @@
 # Venn diagram
 
-**Use for:** showing overlap between sets using circles (feature overlap between teams, a desirable/feasible/viable-style innovation diagram). v11.12+, `venn-beta`.
-**Avoid for:** anything where a single clear answer, not a spread of overlapping categories, is the point.
+**Use for:** showing overlap between sets using circles (feature overlap between teams,
+a desirable/feasible/viable-style innovation diagram). v11.12+, `venn-beta`.
+**Avoid for:** anything where a single clear answer, not a spread of overlapping categories,
+is the point.
 
 ## Core syntax
 
@@ -16,7 +18,8 @@ venn-beta
 <img src="rendered/venn--block1.svg" alt="venn--block1" width=800px/>
 
 - `set <id>` declares one circle; identifiers can be bare words or quoted strings.
-- `union <id1>,<id2>[,...]["Label"]` declares the overlap of two or more previously-declared sets. Three-or-more-way unions render the implied pairwise overlaps automatically so the higher-arity label has a visible region.
+- `union <id1>,<id2>[,...]["Label"]` declares the overlap of two or more previously-declared sets.
+  Three-or-more-way unions render the implied pairwise overlaps automatically so the higher-arity label has a visible region.
 - Bracket syntax `["Display Label"]` on a `set` keeps a short identifier while showing a longer label.
 
 ## Sizes and text nodes
@@ -32,7 +35,8 @@ venn-beta
 ```
 <img src="rendered/venn--block2.svg" alt="venn--block2" width=800px/>
 
-A trailing `:N` on `set`/`union` sets its relative size. Indented `text id["Label"]` lines attach labels inside the most recently declared set or union.
+A trailing `:N` on `set`/`union` sets its relative size.
+Indented `text id["Label"]` lines attach labels inside the most recently declared set or union.
 
 ## Styling
 

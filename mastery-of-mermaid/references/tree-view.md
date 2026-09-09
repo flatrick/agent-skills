@@ -1,7 +1,10 @@
 # TreeView diagram
 
-**Use for:** a directory/file tree, or any strict parent-child hierarchy that reads naturally as a folder listing. v11.14+, `treeView-beta`.
-**Avoid for:** anything with cross-links or multiple parents (use `mindmap.md`'s tree only if truly hierarchical, or a `flowchart` otherwise).
+**Use for:** a directory/file tree,
+or any strict parent-child hierarchy that reads naturally as a folder listing. v11.14+,
+`treeView-beta`.
+**Avoid for:** anything with cross-links or multiple parents (use `mindmap.md`'s tree only if truly hierarchical,
+or a `flowchart` otherwise).
 
 ## Core syntax (indentation)
 
@@ -37,7 +40,9 @@ treeView-beta
 
 <img src="rendered/tree-view--block2.svg" alt="tree-view--block2" width=200px/>
 
-Both light (`├──`, `└──`, `│`) and heavy (`┣━━`, `┗━━`, `┃`) box-drawing characters are recognized; depth is inferred from the branch character's column position, so this format also works for arbitrarily deep nesting pasted straight from a `tree` command.
+Both light (`├──`, `└──`, `│`) and heavy (`┣━━`, `┗━━`, `┃`) box-drawing characters are recognized;
+depth is inferred from the branch character's column position,
+so this format also works for arbitrarily deep nesting pasted straight from a `tree` command.
 
 ## Annotations
 
@@ -65,7 +70,10 @@ treeView-beta
 
 ## Icons
 
-Built-in `file`/`folder` icons are hidden by default; set `config.treeView.showIcons: true` to show them. File-type icons (by filename or extension) are entirely user-configured via `filenameIcons`/`extensionIcons` maps pointing at a registered iconify pack, Mermaid ships no built-in filename→icon mapping.
+Built-in `file`/`folder` icons are hidden by default;
+set `config.treeView.showIcons: true` to show them.
+File-type icons (by filename or extension) are entirely user-configured via `filenameIcons`/`extensionIcons` maps pointing at a registered iconify pack,
+Mermaid ships no built-in filename→icon mapping.
 
 <!-- mermaid-render: id="tree-view--block4" -->
 ```mermaid
@@ -88,9 +96,13 @@ treeView-beta
 
 ## Configuration and theming
 
-`config.treeView`: `rowIndent`, `paddingX`/`paddingY`, `lineThickness`, `showIcons`, `defaultIconPack`, `filenameIcons`, `extensionIcons`. Theme variables under `themeVariables.treeView`: `labelFontSize`, `labelColor`, `lineColor`, `iconColor`, `descriptionColor`, `highlightBg`, `highlightStroke`.
+`config.treeView`: `rowIndent`, `paddingX`/`paddingY`, `lineThickness`, `showIcons`,
+`defaultIconPack`, `filenameIcons`, `extensionIcons`.
+Theme variables under `themeVariables.treeView`: `labelFontSize`, `labelColor`, `lineColor`,
+`iconColor`, `descriptionColor`, `highlightBg`, `highlightStroke`.
 
 ## Common pitfalls
 
-- Tab characters in indentation are auto-expanded to spaces; a parse error's reported line number refers to the original input either way.
+- Tab characters in indentation are auto-expanded to spaces;
+  a parse error's reported line number refers to the original input either way.
 - Comments use `%%`, same as other Mermaid diagrams.

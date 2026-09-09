@@ -1,7 +1,10 @@
 # Wardley map
 
-**Use for:** strategic value-chain mapping, positioning components by user-visibility and evolutionary maturity to reason about build-vs-buy, dependencies, and where to invest. v11.14+, `wardley-beta`.
-**Avoid for:** anything that isn't a strategic/business-architecture exercise; this is a specialized diagram with its own coordinate conventions.
+**Use for:** strategic value-chain mapping,
+positioning components by user-visibility and evolutionary maturity to reason about build-vs-buy,
+dependencies, and where to invest. v11.14+, `wardley-beta`.
+**Avoid for:** anything that isn't a strategic/business-architecture exercise;
+this is a specialized diagram with its own coordinate conventions.
 
 ## Coordinate system (the one thing to get right)
 
@@ -10,7 +13,8 @@
 - **Visibility** (first value, Y-axis): 0.0 = pure infrastructure, 1.0 = fully user-facing.
 - **Evolution** (second value, X-axis): 0.0 = genesis/novel, 1.0 = commodity/utility.
 
-**Note:** this is the opposite of typical `(x, y)` notation, double-check it when writing or reviewing a Wardley map.
+**Note:** this is the opposite of typical `(x, y)` notation,
+double-check it when writing or reviewing a Wardley map.
 
 ## Core syntax
 
@@ -38,8 +42,13 @@ note "Standardising power lets kettles evolve faster" [0.30, 0.49]
 <img src="rendered/wardley--block1.svg" alt="wardley--block1" width=900px/>
 
 - `anchor Name [vis, evo]`: a user or customer, rendered with a bold label.
-- `component Name [vis, evo]`: any value-chain element. Optional trailers: `label [offsetX, offsetY]` to nudge the text label, and a decorator in parentheses.
-- `A -> B` (or `-->`): a dependency link. Names with hyphens (`real-time processing`) don't need quoting; quote a name only if it starts with a non-letter or has characters the grammar can't otherwise parse, or contains spaces and you want it usable as a bare reference elsewhere (`component "Custom Service" [0.55, 0.35]`).
+- `component Name [vis, evo]`: any value-chain element.
+  Optional trailers: `label [offsetX, offsetY]` to nudge the text label,
+  and a decorator in parentheses.
+- `A -> B` (or `-->`): a dependency link.
+  Names with hyphens (`real-time processing`) don't need quoting;
+  quote a name only if it starts with a non-letter or has characters the grammar can't otherwise parse,
+  or contains spaces and you want it usable as a bare reference elsewhere (`component "Custom Service" [0.55, 0.35]`).
 
 ## Decorators
 
@@ -64,7 +73,8 @@ A +'label'> B       labeled flow
 
 ## Evolution and pipelines
 
-`evolve ComponentName targetEvolution` draws a red dashed arrow showing where a component is heading. A `pipeline` groups variants of one component that share visibility but differ in evolution stage:
+`evolve ComponentName targetEvolution` draws a red dashed arrow showing where a component is heading.
+A `pipeline` groups variants of one component that share visibility but differ in evolution stage:
 
 <!-- mermaid-render: id="wardley--block2" -->
 ```mermaid
@@ -86,7 +96,8 @@ evolution Genesis / Concept -> Custom / Emerging -> Product / Converging -> Comm
 evolution Genesis@0.2 -> Custom@0.4 -> Product@0.75 -> Commodity@1.0
 ```
 
-Relabels the default four evolution-stage names; supports dual labels (`Label1 / Label2`) and custom stage boundary widths (`@width`).
+Relabels the default four evolution-stage names;
+supports dual labels (`Label1 / Label2`) and custom stage boundary widths (`@width`).
 
 ## Notes and numbered annotations
 
@@ -96,14 +107,17 @@ annotations [x, y]
 annotation 1,[vis, evo] "text"
 ```
 
-`annotations` sets where the annotation-index legend box is drawn; each `annotation N,[...]` places a numbered marker plus its text in that legend.
+`annotations` sets where the annotation-index legend box is drawn;
+each `annotation N,[...]` places a numbered marker plus its text in that legend.
 
 ## Accelerators/deaccelerators and size
 
-`accelerator "label" [vis, evo]` / `deaccelerator "label" [vis, evo]` mark forces speeding up or resisting evolution. `size [width, height]` sets canvas dimensions (default `[1100, 600]`).
+`accelerator "label" [vis, evo]` / `deaccelerator "label" [vis, evo]` mark forces speeding up or resisting evolution.
+`size [width, height]` sets canvas dimensions (default `[1100, 600]`).
 
 ## Common pitfalls
 
 - Axis order: see the Note at the top of this file.
-- Trend indicators (`Component -.- (x, y)`) are the one exception, see the Note at the top of this file.
+- Trend indicators (`Component -.- (x, y)`) are the one exception,
+  see the Note at the top of this file.
 - Hand-drawn look is not supported; Wardley maps use a custom D3 renderer.

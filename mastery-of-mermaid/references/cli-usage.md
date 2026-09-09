@@ -1,8 +1,9 @@
 # CLI usage (mmdc)
 
-The Mermaid CLI (`@mermaid-js/mermaid-cli`, binary name `mmdc`) is the harness-agnostic way to
-validate and render diagrams: a plain command-line tool, not tied to any particular agent or
-editor. Requires Node.js `^18.19` or `>=20.0`.
+The Mermaid CLI (`@mermaid-js/mermaid-cli`,
+binary name `mmdc`) is the harness-agnostic way to validate and render diagrams:
+a plain command-line tool, not tied to any particular agent or editor.
+Requires Node.js `^18.19` or `>=20.0`.
 
 ## Installing
 
@@ -13,10 +14,9 @@ editor. Requires Node.js `^18.19` or `>=20.0`.
 | No install | `npx -p @mermaid-js/mermaid-cli mmdc -h` | One-off use, or no permission to install globally. |
 | Docker | `docker pull ghcr.io/mermaid-js/mermaid-cli/mermaid-cli` | No Node.js available at all. |
 
-If none of these are available (no shell access, or install blocked), fall back to eyeballing
-syntax against the relevant `references/<type>.md` file and say plainly that the diagram is
-unverified. See `references/configuration.md` for a JavaScript-only validation alternative
-(`mermaid.parse()`) when a JS runtime is available but the CLI is not.
+If none of these are available (no shell access, or install blocked),
+fall back to eyeballing syntax against the relevant `references/<type>.md` file and say plainly that the diagram is unverified.
+See `references/configuration.md` for a JavaScript-only validation alternative (`mermaid.parse()`) when a JS runtime is available but the CLI is not.
 
 ## Basic commands
 
@@ -52,8 +52,8 @@ mmdc -i diagram.mmd -o output.png -t dark -b transparent --cssFile custom.css --
 mmdc -i diagram.mmd -o /dev/null && echo "valid" || echo "invalid syntax"
 ```
 
-On Windows, use `NUL` instead of `/dev/null`. This is the fastest way to check syntax when you
-don't need the rendered image.
+On Windows, use `NUL` instead of `/dev/null`.
+This is the fastest way to check syntax when you don't need the rendered image.
 
 ## Stdin and batch processing
 
@@ -69,8 +69,9 @@ done
 
 ## Rendering diagrams embedded in a markdown file
 
-`mmdc` can process a markdown file directly, rendering every ` ```mermaid ` block to an image
-and rewriting the references, useful for a docs build step rather than one-off diagram files:
+`mmdc` can process a markdown file directly,
+rendering every ` ```mermaid ` block to an image and rewriting the references,
+useful for a docs build step rather than one-off diagram files:
 
 ```bash
 mmdc -i README.template.md -o README.md
@@ -90,9 +91,12 @@ podman run --userns keep-id --user "${UID}" --rm -v /path/to/diagrams:/data:z gh
 
 ## Troubleshooting
 
-- **Large diagrams run out of memory:** `NODE_OPTIONS="--max-old-space-size=4096" mmdc -i large.mmd -o out.svg`. If a diagram routinely needs this, it's also a signal to split it, see the node-count guidance in `references/style-standard.md`.
+- **Large diagrams run out of memory:** `NODE_OPTIONS="--max-old-space-size=4096" mmdc -i large.mmd -o out.svg`.
+  If a diagram routinely needs this, it's also a signal to split it,
+  see the node-count guidance in `references/style-standard.md`.
 - **Docker output owned by root:** add `-u $(id -u):$(id -g)`.
-- **A previously-working diagram suddenly fails to parse:** check whether the Mermaid CLI version changed; syntax that's valid in v11 can differ from v9/v10 (see `maxTextSize`/`maxEdges` limits in `references/configuration.md` for another common silent-failure cause on very large diagrams).
+- **A previously-working diagram suddenly fails to parse:** check whether the Mermaid CLI version changed;
+  syntax that's valid in v11 can differ from v9/v10 (see `maxTextSize`/`maxEdges` limits in `references/configuration.md` for another common silent-failure cause on very large diagrams).
 
 ## Node.js API (programmatic use)
 
@@ -116,5 +120,5 @@ await run('input.mmd', 'output.svg', {
     mmdc -i docs/diagram.mmd -o docs/diagram.svg
 ```
 
-The `scripts/verify-diagrams.ps1` script in this skill automates the same idea across every
-diagram documented here, extract every example, render each with `mmdc`, report failures.
+The `scripts/verify-diagrams.ps1` script in this skill automates the same idea across every diagram documented here,
+extract every example, render each with `mmdc`, report failures.

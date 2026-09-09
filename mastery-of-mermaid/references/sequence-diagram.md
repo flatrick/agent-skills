@@ -1,7 +1,9 @@
 # Sequence diagram
 
-**Use for:** API request/response flows, authentication sequences, message passing between components, any interaction where message order over time is the point.
-**Avoid for:** many parallel independent branches (use a flowchart), or when "who owns this step" matters more than call order (use `swimlanes.md`).
+**Use for:** API request/response flows, authentication sequences,
+message passing between components, any interaction where message order over time is the point.
+**Avoid for:** many parallel independent branches (use a flowchart),
+or when "who owns this step" matters more than call order (use `swimlanes.md`).
 
 ## Core syntax
 
@@ -22,7 +24,10 @@ sequenceDiagram
 ```
 <img src="rendered/sequence-diagram--block1.svg" alt="sequence-diagram--block1" width=800px/>
 
-`participant` renders as a box; `actor` renders as a stick figure, use it for humans/external entities, `participant` for systems. Declare participants explicitly to control display order (otherwise order-of-first-appearance is used). Alias a participant with `participant A as Alice`.
+`participant` renders as a box; `actor` renders as a stick figure,
+use it for humans/external entities, `participant` for systems.
+Declare participants explicitly to control display order (otherwise order-of-first-appearance is used).
+Alias a participant with `participant A as Alice`.
 
 ## Message arrow types
 
@@ -47,7 +52,10 @@ sequenceDiagram
 ```
 <img src="rendered/sequence-diagram--block2.svg" alt="sequence-diagram--block2" width=800px/>
 
-`+` after the arrow activates the target (draws an activation bar); `-` before the arrow deactivates the sender. Or use explicit `activate X` / `deactivate X` statements. Activations can stack on the same participant.
+`+` after the arrow activates the target (draws an activation bar);
+`-` before the arrow deactivates the sender.
+Or use explicit `activate X` / `deactivate X` statements.
+Activations can stack on the same participant.
 
 ## Control-flow blocks
 
@@ -91,7 +99,9 @@ sequenceDiagram
 - `opt`/`end`: single optional branch (no else).
 - `par`/`and`/`end`: concurrent branches; nestable.
 - `loop`/`end`: repeated block.
-- `critical`/`option`/`end`: one action that must happen, with conditional handling of failure circumstances (options are like a switch on outcome, not alternatives to try).
+- `critical`/`option`/`end`: one action that must happen,
+  with conditional handling of failure circumstances (options are like a switch on outcome,
+  not alternatives to try).
 - `break`/`end`: an early exit from the flow, usually modeling an exception.
 
 ## Notes, numbering, and grouping
@@ -113,8 +123,11 @@ sequenceDiagram
 <img src="rendered/sequence-diagram--block4.svg" alt="sequence-diagram--block4" width=800px/>
 
 - `autonumber` (optionally `autonumber <start> <increment>`) numbers every arrow automatically.
-- `Note left of X` / `Note right of X` / `Note over X,Y`: attach explanatory notes; text can include `<br/>` for line breaks.
-- `box <color> Label ... end`: visually groups participants in a colored vertical band (hex colors aren't supported, use rgb()/named colors or omit the color).
+- `Note left of X` / `Note right of X` / `Note over X,Y`: attach explanatory notes;
+  text can include `<br/>` for line breaks.
+- `box <color> Label ... end`:
+  visually groups participants in a colored vertical band (hex colors aren't supported,
+  use rgb()/named colors or omit the color).
 - `rect rgb(r,g,b) ... end`: highlights a region of the diagram with a background rectangle.
 
 ## Participant creation/destruction
@@ -132,14 +145,20 @@ sequenceDiagram
 
 ## Participant stereotypes (v11+)
 
-Use JSON-style config after the participant name for a distinct visual symbol: `participant Alice@{ "type": "boundary" }` (also `"control"`, `"entity"`, `"database"`, `"collections"`, `"queue"`). Combine with `as Label` for a display alias, or an inline `"alias"` field.
+Use JSON-style config after the participant name for a distinct visual symbol:
+`participant Alice@{ "type": "boundary" }` (also `"control"`, `"entity"`, `"database"`,
+`"collections"`, `"queue"`).
+Combine with `as Label` for a display alias, or an inline `"alias"` field.
 
 ## Common pitfalls
 
-- The bare word "end" can break the parser the same way it does in flowcharts; wrap it in parentheses/brackets if unavoidable.
-- Hex colors (`#ff0000`) don't work in `box` headers because `#` starts a comment; use `rgb()`/`rgba()`/`hsl()` or a named color.
+- The bare word "end" can break the parser the same way it does in flowcharts;
+  wrap it in parentheses/brackets if unavoidable.
+- Hex colors (`#ff0000`) don't work in `box` headers because `#` starts a comment;
+  use `rgb()`/`rgba()`/`hsl()` or a named color.
 - A comment (`%%`) consumes the rest of its line, including diagram syntax placed after it.
-- Keep each diagram to one scenario; branch with `alt` rather than drawing every path as a separate top-level diagram.
+- Keep each diagram to one scenario;
+  branch with `alt` rather than drawing every path as a separate top-level diagram.
 
 ## Common patterns
 

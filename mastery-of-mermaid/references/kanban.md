@@ -1,6 +1,7 @@
 # Kanban
 
-**Use for:** a task board across workflow stages (Todo/In Progress/Done), lightweight project-status snapshots.
+**Use for:** a task board across workflow stages (Todo/In Progress/Done),
+lightweight project-status snapshots.
 **Avoid for:** anything needing dependency arrows or dates (use `gantt.md`).
 
 ## Core syntax
@@ -34,7 +35,9 @@ kanban
 ```
 <img src="rendered/kanban--block2.svg" alt="kanban--block2" width=300px/>
 
-Metadata is a `@{ key: value, ... }` block after a task. Supported keys: `assigned` (who owns it), `ticket` (an issue/ticket reference), `priority` (`'Very High'`, `'High'`, `'Low'`, `'Very Low'`).
+Metadata is a `@{ key: value, ... }` block after a task.
+Supported keys: `assigned` (who owns it), `ticket` (an issue/ticket reference),
+`priority` (`'Very High'`, `'High'`, `'Low'`, `'Very Low'`).
 
 ## Configuration
 
@@ -51,10 +54,14 @@ kanban
 ```
 <img src="rendered/kanban--block3.svg" alt="kanban--block3" width=300px/>
 
-When a task has an `assigned` ticket, `ticketBaseUrl` turns the rendered ticket number into a link, with `#TICKET#` substituted for the task's ticket value.
-A frontmatter block always needs an actual diagram body after its closing `---`; frontmatter alone is not a valid diagram.
+When a task has an `assigned` ticket, `ticketBaseUrl` turns the rendered ticket number into a link,
+with `#TICKET#` substituted for the task's ticket value.
+A frontmatter block always needs an actual diagram body after its closing `---`;
+frontmatter alone is not a valid diagram.
 
 ## Common pitfalls
 
-- Proper indentation is what assigns a task to its column; a mis-indented task silently attaches to the wrong (or no) column.
-- Reusing a task id across columns (as in the metadata example's `id3`) is allowed by the parser but confusing to read; prefer unique ids throughout.
+- Proper indentation is what assigns a task to its column;
+  a mis-indented task silently attaches to the wrong (or no) column.
+- Reusing a task id across columns (as in the metadata example's `id3`) is allowed by the parser but confusing to read;
+  prefer unique ids throughout.

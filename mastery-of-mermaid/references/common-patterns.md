@@ -1,6 +1,7 @@
 # Common Mermaid diagram patterns
 
-Reusable templates for frequently needed scenarios. Adjust names and edges to the real system before use; don't ship these as-is.
+Reusable templates for frequently needed scenarios.
+Adjust names and edges to the real system before use; don't ship these as-is.
 
 ## Software development workflows
 

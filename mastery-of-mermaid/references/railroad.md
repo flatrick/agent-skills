@@ -1,6 +1,7 @@
 # Railroad diagram
 
-**Use for:** documenting a formal grammar (syntax diagrams), popularized by Niklaus Wirth's Pascal manual and still used today (e.g. json.org). v11.16+.
+**Use for:** documenting a formal grammar (syntax diagrams),
+popularized by Niklaus Wirth's Pascal manual and still used today (e.g. json.org). v11.16+.
 **Avoid for:** anything that isn't literally describing a context-free grammar.
 
 Pick the keyword matching the notation you're writing in:
@@ -12,7 +13,8 @@ Pick the keyword matching the notation you're writing in:
 | PEG | `railroad-peg-beta` | Parsing Expression Grammar |
 | IR primitives | `railroad-beta` | Mermaid's own constructors, written explicitly |
 
-All four share the same outer shape: the type keyword on line one, optional `title "..."`, optional `accTitle:`/`accDescr:`, then one rule per statement, each ending in `;`.
+All four share the same outer shape: the type keyword on line one, optional `title "..."`,
+optional `accTitle:`/`accDescr:`, then one rule per statement, each ending in `;`.
 
 ## EBNF
 
@@ -25,7 +27,15 @@ digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
 ```
 <img src="rendered/railroad--block1.svg" alt="railroad--block1" width=200px/>
 
-Rules: `rule = definition ;` (`::=` also accepted). Terminals are quoted strings; non-terminals are bare identifiers. Sequence is juxtaposition (`A B` in W3C style, `A , B` in ISO style). Choice is `|`. Optional is `A?` (W3C) or `[ A ]` (ISO). Repetition: `A*` zero-or-more, `A+` one-or-more (W3C only), `{ A }` zero-or-more (ISO). Grouping uses `( )`. Comments: `/* ... */` (W3C) or `(* ... *)` (ISO). Exception: `A - B` (match A but not B).
+Rules: `rule = definition ;` (`::=` also accepted).
+Terminals are quoted strings; non-terminals are bare identifiers.
+Sequence is juxtaposition (`A B` in W3C style, `A , B` in ISO style).
+Choice is `|`.
+Optional is `A?` (W3C) or `[ A ]` (ISO).
+Repetition: `A*` zero-or-more, `A+` one-or-more (W3C only), `{ A }` zero-or-more (ISO).
+Grouping uses `( )`.
+Comments: `/* ... */` (W3C) or `(* ... *)` (ISO).
+Exception: `A - B` (match A but not B).
 
 ## ABNF
 
@@ -39,7 +49,9 @@ local-part = 1*( ALPHA / DIGIT / "." / "-" ) ;
 ```
 <img src="rendered/railroad--block2.svg" alt="railroad--block2" width=400px/>
 
-Alternation is `/` not `|`; repetition is a numeric prefix (`*A` zero-or-more, `1*A` one-or-more, `2*4A` between 2 and 4, `3A` exactly 3); optional is `[ A ]`; terminals can be quoted or numeric (`%x41`, `%d65`, ranges like `%x30-39`); comments start with `;`.
+Alternation is `/` not `|`; repetition is a numeric prefix (`*A` zero-or-more, `1*A` one-or-more,
+`2*4A` between 2 and 4, `3A` exactly 3); optional is `[ A ]`;
+terminals can be quoted or numeric (`%x41`, `%d65`, ranges like `%x30-39`); comments start with `;`.
 
 ## PEG
 
@@ -52,14 +64,22 @@ Expression <- Term (("+" / "-") Term)* ;
 ```
 <img src="rendered/railroad--block3.svg" alt="railroad--block3" width=400px/>
 
-Rules use `<-`. Ordered choice is `/` (tries left-to-right). Suffix operators `?`/`*`/`+` work as usual. Prefix predicates: `&A` (lookahead), `!A` (negative lookahead). `.` matches any character. Comments start with `#`.
+Rules use `<-`.
+Ordered choice is `/` (tries left-to-right).
+Suffix operators `?`/`*`/`+` work as usual.
+Prefix predicates: `&A` (lookahead), `!A` (negative lookahead).
+`.` matches any character.
+Comments start with `#`.
 
 ## IR primitives (`railroad-beta`)
 
-Explicit constructors when you want direct control over structure: `terminal("text")`, `nonterminal("name")`, `sequence(a, b, ...)`, `choice(a, b, ...)`, `optional(a)`, `zeroOrMore(a)`, `oneOrMore(a)`, `special("text")`.
+Explicit constructors when you want direct control over structure: `terminal("text")`,
+`nonterminal("name")`, `sequence(a, b, ...)`, `choice(a, b, ...)`, `optional(a)`, `zeroOrMore(a)`,
+`oneOrMore(a)`, `special("text")`.
 
 ## Common pitfalls
 
 - Stick to one notation (and its matching keyword) throughout a single diagram.
 - Hand-drawn look is not supported for railroad diagrams.
-- Terminals render as rounded rectangles, non-terminals as regular rectangles, both inherit the active theme's colors.
+- Terminals render as rounded rectangles, non-terminals as regular rectangles,
+  both inherit the active theme's colors.

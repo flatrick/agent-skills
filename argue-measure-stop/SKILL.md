@@ -11,111 +11,134 @@ The identity is the **argue ↔ measure interleaving**, not the arguing.
 > **No premise verdict stands on argument alone when a probe could settle it.
 > No measurement is formalized without its meaning being attacked.**
 
-A red team without the measurement loop is confident vibes. A measurement loop without the phase
-contract below is a sixth reviewer inside the machinery this phase exists to stay out of.
+A red team without the measurement loop is confident vibes.
+A measurement loop without the phase contract below is a sixth reviewer inside the machinery this phase exists to stay out of.
 
-**Input**: the idea. If invoked with none, ask for one — a single question — and stop until answered.
+**Input**: the idea.
+If invoked with none, ask for one — a single question — and stop until answered.
 
 ---
 
 ## The phase contract
 
-1. **Output is a decision memo and probe records. Nothing else.**
-   No `proposal.md`, no `design.md`, no delta spec, no `tasks.md`, no change directory, no bug
-   file, no backlog item.
-2. **Hard stop at a human gate.** The session ends at *"here is the memo; the call is yours."*
-   Never roll into `/opsx:propose` in the same conversation — spec authoring is a separate
-   invocation, from the memo, deliberately.
+1. **Output is a decision memo and probe records.
+   Nothing else.**
+   No `proposal.md`, no `design.md`, no delta spec, no `tasks.md`, no change directory,
+   no bug file, no backlog item.
+2. **Hard stop at a human gate.**
+   The session ends at *"here is the memo;
+   the call is yours."* Never roll into `/opsx:propose` in the same conversation — spec authoring is a separate invocation,
+   from the memo, deliberately.
 3. **OpenSpec is strictly downstream and consumes exactly one thing: the memo.**
-4. **Rules-light while investigating.** Inside phase 0 the only obligations are: do not touch the
-   `main` checkout, do not fabricate a result, measure the kill conditions or record why no
-   instrument exists, and write the memo. TDD, coverage, mutation, review
-   rounds, and disposition machinery all begin at phase 1. This is
-   `.claude/rules/development.md`'s throwaway-exploration permission as the phase *default*.
+4. **Rules-light while investigating.**
+   Inside phase 0 the only obligations are: do not touch the `main` checkout,
+   do not fabricate a result, measure the kill conditions or record why no instrument exists,
+   and write the memo.
+   TDD, coverage, mutation, review rounds, and disposition machinery all begin at phase 1.
+   This is `.claude/rules/development.md`'s throwaway-exploration permission as the phase *default*.
 
-Why the contract, and not just the stance: once a phase can probe and spike, sunk-cost gravity
-returns — *"we measured all this, let's formalize"* — and phase 0 quietly becomes spec authoring.
+Why the contract, and not just the stance: once a phase can probe and spike,
+sunk-cost gravity returns — *"we measured all this,
+let's formalize"* — and phase 0 quietly becomes spec authoring.
 The dead end has to hold at the artifact level, or it does not hold.
 
 ---
 
 ## The loop
 
-Run these in order; revisit any of them freely. **Frame** and **Investigate** are the two that
-cannot be skipped, and each carries its own refusal clause below.
+Run these in order; revisit any of them freely.
+**Frame** and **Investigate** are the two that cannot be skipped,
+and each carries its own refusal clause below.
 
-**1. Frame** — with the human, before anything else. Four things, in writing:
+**1.
+Frame** — with the human, before anything else.
+Four things, in writing:
 
 - the **use case** — who is stuck, on what, today;
 - the **kill conditions** — two or three sentences of *"this idea dies if X"*;
 - the **done-definition** — what is observably true when this is finished;
-- the **measurement** — for *each* kill condition, the observation that would settle it. Name the
-  probe, the fixture, the command, or the instrument. Not "investigate whether X"; the thing you
-  would run.
+- the **measurement** — for *each* kill condition, the observation that would settle it.
+  Name the probe, the fixture, the command, or the instrument.
+  Not "investigate whether X"; the thing you would run.
 
-Refuse to proceed until all four exist. **Inability to state them is the first finding**, and it is
-usually the real one. Probe the kill conditions *first* — they are where the idea is cheapest to lose.
+Refuse to proceed until all four exist.
+**Inability to state them is the first finding**, and it is usually the real one.
+Probe the kill conditions *first* — they are where the idea is cheapest to lose.
 
-The fourth item exists to catch, at the cheapest moment, a question that **admits no measurement at
-all**. A question about a historical record — what a finished branch cost, whether past rounds were
-avoidable — has no probe surface: the only evidence is the artifacts, so the phase silently collapses
-into reading and reasoning and produces a memo indistinguishable from a measured one. If you cannot
-name an instrument for any kill condition, say so **here**, and either reshape the question into one
-a probe can reach or decline the phase and use `/rubberduck`, which argues honestly and never claims
-to have measured.
+The fourth item exists to catch, at the cheapest moment,
+a question that **admits no measurement at all**.
+A question about a historical record — what a finished branch cost,
+whether past rounds were avoidable — has no probe surface: the only evidence is the artifacts,
+so the phase silently collapses into reading and reasoning and produces a memo indistinguishable from a measured one.
+If you cannot name an instrument for any kill condition, say so **here**,
+and either reshape the question into one a probe can reach or decline the phase and use `/rubberduck`,
+which argues honestly and never claims to have measured.
 
-**2. Prior art** — before any probe of your own. Spend a bounded pass on how a shipped tool already
-solved this: Buildalyzer, OmniSharp, Rider, Roslyn's and MSBuild's own test suites,
-`dotnet-knowledge`'s sources. Say plainly what you found and what you could not find.
+**2.
+Prior art** — before any probe of your own.
+Spend a bounded pass on how a shipped tool already solved this: Buildalyzer, OmniSharp, Rider,
+Roslyn's and MSBuild's own test suites, `dotnet-knowledge`'s sources.
+Say plainly what you found and what you could not find.
 
-**3. Investigate** — probes and a spike, against the kill conditions.
+**3.
+Investigate** — probes and a spike, against the kill conditions.
 
 - Start a probe from `tools/roslyn-probes/_TEMPLATE.cs` / `_TEMPLATE.md`.
 - Probe a **real project**, not only a synthetic fixture.
-- A spike is throwaway by construction. It is cannibalized deliberately or deleted at phase 1 —
-  never promoted into the implementation.
+- A spike is throwaway by construction.
+  It is cannibalized deliberately or deleted at phase 1 — never promoted into the implementation.
 
-**You may not leave this step with a kill condition still `unmeasured` unless you write down why it
-is unmeasurable** — the instrument named at step 1 that turned out not to exist, the fixture that
-cannot be built, the tool that was unavailable. An `unmeasured` with a stated reason is a legitimate
-result and travels into the memo and the decision. An `unmeasured` with no reason means the step was
-skipped, and skipping it is the one failure this phase cannot survive: everything downstream —
-the adversary's premises, the memo's confidence, the human's call — is then argument wearing the
-grammar of evidence.
+**You may not leave this step with a kill condition still `unmeasured` unless you write down why it is unmeasurable** — the instrument named at step 1 that turned out not to exist,
+the fixture that cannot be built, the tool that was unavailable.
+An `unmeasured` with a stated reason is a legitimate result and travels into the memo and the decision.
+An `unmeasured` with no reason means the step was skipped,
+and skipping it is the one failure this phase cannot survive:
+everything downstream — the adversary's premises, the memo's confidence,
+the human's call — is then argument wearing the grammar of evidence.
 
-This is step 1's refusal clause applied to the step it protects. Step 1 is guarded because a
-frame nobody can state is the finding; step 3 is guarded for the same reason, one level in.
+This is step 1's refusal clause applied to the step it protects.
+Step 1 is guarded because a frame nobody can state is the finding;
+step 3 is guarded for the same reason, one level in.
 
-**4. Adversary** — two dispatches, both **blind** and both **forbidden from critiquing wording**.
-Hand each only the problem statement, the mechanism in ten lines, and the done-definition. Never the
-memo prose, never a prior agent's verdict, never who proposed what.
+**4.
+Adversary** — two dispatches, both **blind** and both **forbidden from critiquing wording**.
+Hand each only the problem statement, the mechanism in ten lines, and the done-definition.
+Never the memo prose, never a prior agent's verdict, never who proposed what.
 
 - **Red team** — produce the strongest argument that this fails, *and* the strongest rival approach.
-  Attack the **kill conditions and the done-definition themselves**, not only the mechanism: a
-  self-serving done-definition ("done is what the spike already does") is the failure this catches.
-- **Simplifier** — the smallest thing that serves the use case. What can we *not* build?
+  Attack the **kill conditions and the done-definition themselves**, not only the mechanism:
+  a self-serving done-definition ("done is what the spike already does") is the failure this catches.
+- **Simplifier** — the smallest thing that serves the use case.
+  What can we *not* build?
 
-Where a dispatch's verdict turns on a premise a probe could settle, go back to step 3 rather than
-accepting the argument. That return edge is the whole method.
+Where a dispatch's verdict turns on a premise a probe could settle,
+go back to step 3 rather than accepting the argument.
+That return edge is the whole method.
 
-**5. Close** — write the memo, then **one** blind cold-context refutation pass on its *decision*
-(not its prose). One pass, never rounds — a review recursion here re-creates the problem this phase
-exists to avoid. Then stop and hand it to the human.
+**5.
+Close** — write the memo,
+then **one** blind cold-context refutation pass on its *decision* (not its prose).
+One pass, never rounds — a review recursion here re-creates the problem this phase exists to avoid.
+Then stop and hand it to the human.
 
-**A memo whose `## What was measured` cites no probe record and states no reason for that is not a
-phase-0 memo.** Do not hand it over. Go back to step 3, or go back to step 1 and declare the
-question unmeasurable — those are the two exits; handing it over anyway is not one of them.
+**A memo whose `## What was measured` cites no probe record and states no reason for that is not a phase-0 memo.**
+Do not hand it over.
+Go back to step 3,
+or go back to step 1 and declare the question unmeasurable — those are the two exits;
+handing it over anyway is not one of them.
 
 ---
 
 ## The memo
 
-Path: `.agents/phase0/<topic-slug>/<YYYY-MM-DD-HHMMSS>.md`. Create directories as needed. One file
-per session, stamp chosen once at the first write and reused — rewrite it in full each time, never
-append. Write on any turn that produces a new conclusion; never defer to an explicit "end".
+Path: `.agents/phase0/<topic-slug>/<YYYY-MM-DD-HHMMSS>.md`.
+Create directories as needed.
+One file per session,
+stamp chosen once at the first write and reused — rewrite it in full each time, never append.
+Write on any turn that produces a new conclusion; never defer to an explicit "end".
 
-**One to two pages. A memo that reaches thousands of words has failed** — it has become the corpus
-this phase exists to stop producing.
+**One to two pages.
+A memo that reaches thousands of words has failed** — it has become the corpus this phase exists to stop producing.
 
 ```markdown
 # Phase 0: <topic>
@@ -132,43 +155,48 @@ this phase exists to stop producing.
 ## Open questions
 ```
 
-`## Measurement status` is one line and it is mandatory. `UNMEASURED` **caps the decision**: the
-strongest call an unmeasured memo may make is *"still unknown, and here is what would settle it"*.
-It may not say build, and it may not say do not build — an unmeasured kill condition is exactly the
-premise a build-or-kill verdict rests on. Write the cap into the `## Decision` line itself rather
-than leaving the reader to infer it from a status two sections up.
+`## Measurement status` is one line and it is mandatory.
+`UNMEASURED` **caps the decision**:
+the strongest call an unmeasured memo may make is *"still unknown,
+and here is what would settle it"*.
+It may not say build,
+and it may not say do not build — an unmeasured kill condition is exactly the premise a build-or-kill verdict rests on.
+Write the cap into the `## Decision` line itself rather than leaving the reader to infer it from a status two sections up.
 
-Keep hedges and inconclusive flags verbatim — a caveat is part of the finding, and dropping it in
-transcription turns an uncertain result into a confident wrong one.
+Keep hedges and inconclusive flags verbatim — a caveat is part of the finding,
+and dropping it in transcription turns an uncertain result into a confident wrong one.
 
 ---
 
 ## Status: on trial, not a gate
 
-This command is **not** currently a required precondition for authoring a change, and nothing
-enforces it.
+This command is **not** currently a required precondition for authoring a change,
+and nothing enforces it.
 
 It is promoted to a required gate once it has visibly **killed or shrunk at least one real idea**.
-If every idea run through it passes, the red team is decorative and the command is a tax — that
-outcome is a finding about the command, and the right response is to change or delete it rather
-than to mandate it.
+If every idea run through it passes,
+the red team is decorative and the command is a tax — that outcome is a finding about the command,
+and the right response is to change or delete it rather than to mandate it.
 
 When it is promoted, the **mechanical change class is exempt** — renames, fixture additions,
-path/namespace fixes, consolidations, doc and prompt updates. Those have no kill conditions worth
-stating, and forcing the ritual there trains bypass.
+path/namespace fixes, consolidations, doc and prompt updates.
+Those have no kill conditions worth stating, and forcing the ritual there trains bypass.
 
-**Precedence.** In this repository this command supersedes `superpowers:brainstorming` for
-pre-proposal work; do not run both. `/opsx:explore` remains correct only for fine-tuning a change
-that already exists.
+**Precedence.**
+In this repository this command supersedes `superpowers:brainstorming` for pre-proposal work;
+do not run both.
+`/opsx:explore` remains correct only for fine-tuning a change that already exists.
 
 ---
 
 ## What this does NOT do
 
 - Author or edit any OpenSpec artifact, bug file, or backlog item.
-- Run review rounds, dispositions, or a findings-ledger protocol. One memo is the record.
-- Produce production code. A probe and a spike are throwaway; neither is a deliverable.
+- Run review rounds, dispositions, or a findings-ledger protocol.
+  One memo is the record.
+- Produce production code.
+  A probe and a spike are throwaway; neither is a deliverable.
 - Suggest, as a next step, that you do any of the above in this session.
 
-`/rubberduck` is the sibling that argues and cannot measure. This one may touch a compiler — and
-stops at exactly the same place.
+`/rubberduck` is the sibling that argues and cannot measure.
+This one may touch a compiler — and stops at exactly the same place.

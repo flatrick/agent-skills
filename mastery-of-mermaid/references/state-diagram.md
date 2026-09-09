@@ -1,6 +1,8 @@
 # State diagram
 
-**Use for:** state machines, record lifecycles, status transitions (`stateDiagram-v2` is the current, actively-developed syntax; prefer it over the legacy `stateDiagram`).
+**Use for:** state machines, record lifecycles,
+status transitions (`stateDiagram-v2` is the current, actively-developed syntax;
+prefer it over the legacy `stateDiagram`).
 **Avoid for:** continuous polling loops (use a sequence diagram) or a process where "who does this step" matters more than which state something is in (use `swimlanes.md`).
 
 ## Core syntax
@@ -17,7 +19,10 @@ stateDiagram-v2
 ```
 <img src="rendered/state-diagram--block1.svg" alt="state-diagram--block1" width=200px/>
 
-`[*]` is the special start/end pseudostate; the direction of the arrow to/from it determines whether it's a start or an end. A transition can carry a label: `s1 --> s2 : A transition`. A state gets a description either via `state "Description" as s2` or `s2 : Description`.
+`[*]` is the special start/end pseudostate;
+the direction of the arrow to/from it determines whether it's a start or an end.
+A transition can carry a label: `s1 --> s2 : A transition`.
+A state gets a description either via `state "Description" as s2` or `s2 : Description`.
 
 ## Composite (nested) states
 
@@ -38,7 +43,9 @@ stateDiagram-v2
 ```
 <img src="rendered/state-diagram--block2.svg" alt="state-diagram--block2" width=400px/>
 
-Nesting can go arbitrarily deep. Transitions between composite states are allowed at the outer level; transitions between internal states of *different* composite states are not.
+Nesting can go arbitrarily deep.
+Transitions between composite states are allowed at the outer level;
+transitions between internal states of *different* composite states are not.
 
 ## Choice, fork, join
 
@@ -96,7 +103,8 @@ stateDiagram-v2
 ```
 <img src="rendered/state-diagram--block5.svg" alt="state-diagram--block5" width=400px/>
 
-`direction` (`TB`/`LR`/etc.) sets layout, including per-composite-state via a nested `direction` line.
+`direction` (`TB`/`LR`/etc.) sets layout,
+including per-composite-state via a nested `direction` line.
 
 ## Styling
 
@@ -115,13 +123,18 @@ stateDiagram-v2
 ```
 <img src="rendered/state-diagram--block6.svg" alt="state-diagram--block6" width=100px/>
 
-Two ways to apply a `classDef`: the `class` statement (works for start/end states too), or the `:::` shorthand at the point of use. **Limitation:** `classDef` styling cannot be applied to or within composite states themselves.
+Two ways to apply a `classDef`: the `class` statement (works for start/end states too),
+or the `:::` shorthand at the point of use.
+**Limitation:** `classDef` styling cannot be applied to or within composite states themselves.
 
 ## Common pitfalls
 
-- Spaces in a state's name require defining it with a bare id first (`stateId: Description with spaces`), then referencing the id.
-- Transitions can't cross between internal states of two different composite states; route the transition through the composite states themselves.
-- The legacy `stateDiagram` (without `-v2`) still works but has fewer features; use `stateDiagram-v2` for new diagrams.
+- Spaces in a state's name require defining it with a bare id first (`stateId: Description with spaces`),
+  then referencing the id.
+- Transitions can't cross between internal states of two different composite states;
+  route the transition through the composite states themselves.
+- The legacy `stateDiagram` (without `-v2`) still works but has fewer features;
+  use `stateDiagram-v2` for new diagrams.
 
 ## Common patterns
 
