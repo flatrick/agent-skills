@@ -21,7 +21,7 @@ requirementDiagram
 
     test_entity - satisfies -> test_req
 ```
-![requirement-diagram--block1](rendered/requirement-diagram--block1.svg)
+<img src="rendered/requirement-diagram--block1.svg" alt="requirement-diagram--block1" width=200px/>
 
 ## Requirement block
 

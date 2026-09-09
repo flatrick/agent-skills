@@ -18,7 +18,7 @@ quadrantChart
     Campaign A: [0.3, 0.6]
     Campaign B: [0.45, 0.23]
 ```
-![quadrant-chart--block1](rendered/quadrant-chart--block1.svg)
+<img src="rendered/quadrant-chart--block1.svg" alt="quadrant-chart--block1" width=500px/>
 
 - `x-axis <left> --> <right>` and `y-axis <bottom> --> <top>` label the axes; the right/top half of the label is optional (`x-axis Urgent` alone labels only the left end).
 - `quadrant-1` through `quadrant-4` label the four regions: 1 = top-right, 2 = top-left, 3 = bottom-left, 4 = bottom-right.

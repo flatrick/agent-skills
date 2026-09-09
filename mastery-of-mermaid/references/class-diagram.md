@@ -17,7 +17,7 @@ classDiagram
         +getBalance() Decimal
     }
 ```
-![class-diagram--block1](rendered/class-diagram--block1.svg)
+<img src="rendered/class-diagram--block1.svg" alt="class-diagram--block1" width=250px/>
 
 Visibility modifiers: `+` public, `-` private, `#` protected, `~` package/internal. A method ending in `*` is abstract (`draw()*`); ending in `$` is static (`someStaticMethod()$`). Mermaid tells attributes from methods by the presence of `()`.
 
@@ -34,7 +34,7 @@ classDiagram
     }
     List~String~ <-- StringProcessor
 ```
-![class-diagram--block2](rendered/class-diagram--block2.svg)
+<img src="rendered/class-diagram--block2.svg" alt="class-diagram--block2" width=200px/>
 
 Wrap a generic type parameter in `~tilde~`. Nested generics (`List~List~int~~`) work; generics containing a comma don't. The generic part is not part of the class name for reference purposes.
 
@@ -78,7 +78,7 @@ classDiagram
     Shape <|-- Circle
     Drawable <|.. Circle
 ```
-![class-diagram--block3](rendered/class-diagram--block3.svg)
+<img src="rendered/class-diagram--block3.svg" alt="class-diagram--block3" width=500px/>
 
 Common stereotypes: `<<interface>>`, `<<abstract>>`, `<<service>>`, `<<enumeration>>`, and DDD ones like `<<entity>>`, `<<value object>>`, `<<aggregate root>>`.
 
@@ -95,7 +95,7 @@ classDiagram
         }
     }
 ```
-![class-diagram--block4](rendered/class-diagram--block4.svg)
+<img src="rendered/class-diagram--block4.svg" alt="class-diagram--block4" width=200px/>
 
 Namespaces group classes visually and can be dot-nested (`namespace Company.Engineering.Backend { ... }`) or syntactically nested (a `namespace` block inside another). Give a namespace a display label with `namespace id["Display Label"]`.
 
@@ -112,7 +112,7 @@ classDiagram
     class Animal:::pink
     classDef pink fill:#f9f
 ```
-![class-diagram--block5](rendered/class-diagram--block5.svg)
+<img src="rendered/class-diagram--block5.svg" alt="class-diagram--block5" width=250px/>
 
 `direction` (`TB`, `BT`, `LR`, `RL`) sets layout direction. `style`/`classDef`/`class`/`:::` work the same as in flowcharts.
 

@@ -13,7 +13,7 @@ zenuml
     John->Alice: Great!
     Alice->John: See you later!
 ```
-![zenuml--block1](rendered/zenuml--block1.svg)
+<img src="rendered/zenuml--block1.svg" alt="zenuml--block1" width=400px/>
 
 Participants can be declared implicitly (first appearance sets order) or explicitly up front, same as standard sequence diagrams. Use `@Actor`/`@Database`/similar annotators to pick a symbol for a participant, and `A as Alice` for an alias.
 

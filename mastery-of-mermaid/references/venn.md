@@ -13,7 +13,7 @@ venn-beta
   set Backend
   union Frontend,Backend["APIs"]
 ```
-![venn--block1](rendered/venn--block1.svg)
+<img src="rendered/venn--block1.svg" alt="venn--block1" width=800px/>
 
 - `set <id>` declares one circle; identifiers can be bare words or quoted strings.
 - `union <id1>,<id2>[,...]["Label"]` declares the overlap of two or more previously-declared sets. Three-or-more-way unions render the implied pairwise overlaps automatically so the higher-arity label has a visible region.
@@ -30,7 +30,7 @@ venn-beta
   union A,B["Shared"]:3
     text AB1["OpenAPI"]
 ```
-![venn--block2](rendered/venn--block2.svg)
+<img src="rendered/venn--block2.svg" alt="venn--block2" width=800px/>
 
 A trailing `:N` on `set`/`union` sets its relative size. Indented `text id["Label"]` lines attach labels inside the most recently declared set or union.
 

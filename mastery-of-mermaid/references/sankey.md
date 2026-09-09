@@ -17,7 +17,7 @@ Agricultural waste,Bio-conversion,124.729
 Bio-conversion,Liquid,0.597
 Bio-conversion,Losses,26.862
 ```
-![sankey--block1](rendered/sankey--block1.svg)
+<img src="rendered/sankey--block1.svg" alt="sankey--block1" width=700px/>
 
 - Empty lines are allowed for visual grouping (not standard CSV, but Mermaid accepts it here).
 - `%%` comments work as a leading line, e.g. `%% source,target,value` as a header hint.

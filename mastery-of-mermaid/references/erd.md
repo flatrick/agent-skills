@@ -22,7 +22,7 @@ erDiagram
         decimal total
     }
 ```
-![erd--block1](rendered/erd--block1.svg)
+<img src="rendered/erd--block1.svg" alt="erd--block1" width=250px/>
 
 Only the first entity in a statement is mandatory, letting you declare a bare entity (`CUSTOMER`) with no relationship, useful while iterating. Entity names conventionally use UPPERCASE and singular nouns (`CUSTOMER` not `CUSTOMERS`).
 
@@ -54,7 +54,7 @@ erDiagram
         string(99) name "max 99 chars"
     }
 ```
-![erd--block2](rendered/erd--block2.svg)
+<img src="rendered/erd--block2.svg" alt="erd--block2" width=400px/>
 
 Attribute format is `type name [key] ["comment"]`. Keys: `PK` (primary), `FK` (foreign), `UK` (unique); combine with a comma (`PK, FK`). A trailing quoted string is a free-form comment/constraint note. Optional/nullable types can end in `?` (`string? middleName`, v11.16+).
 
@@ -71,7 +71,7 @@ erDiagram
     }
     p ||--o| a : has
 ```
-![erd--block3](rendered/erd--block3.svg)
+<img src="rendered/erd--block3.svg" alt="erd--block3" width=200px/>
 
 Square-bracket aliases display a friendlier name than the internal identifier. Entity names, relationships, and attributes support unicode and basic markdown formatting when quoted.
 
@@ -85,7 +85,7 @@ erDiagram
         CUSTOMER
     end
 ```
-![erd--block4](rendered/erd--block4.svg)
+<img src="rendered/erd--block4.svg" alt="erd--block4" width=300px/>
 
 `direction` sets `TB`/`BT`/`LR`/`RL`. Subgraphs (v11+) group entities and can be nested; reference a subgraph by its `id`, quoting it if it contains spaces. `style`/`classDef`/`class`/`:::` styling works the same as flowcharts.
 

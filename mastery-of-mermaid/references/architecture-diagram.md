@@ -17,7 +17,7 @@ architecture-beta
 
     db:L -- R:server
 ```
-![architecture-diagram--block1](rendered/architecture-diagram--block1.svg)
+<img src="rendered/architecture-diagram--block1.svg" alt="architecture-diagram--block1" width=500px/>
 
 Building blocks: `group`, `service`, `edge`, `junction`.
 

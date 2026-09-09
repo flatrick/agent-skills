@@ -35,7 +35,7 @@ evolve Power 0.89
 
 note "Standardising power lets kettles evolve faster" [0.30, 0.49]
 ```
-![wardley--block1](rendered/wardley--block1.svg)
+<img src="rendered/wardley--block1.svg" alt="wardley--block1" width=900px/>
 
 - `anchor Name [vis, evo]`: a user or customer, rendered with a bold label.
 - `component Name [vis, evo]`: any value-chain element. Optional trailers: `label [offsetX, offsetY]` to nudge the text label, and a decorator in parentheses.
@@ -76,7 +76,7 @@ pipeline Database {
   component "Cloud DB" [0.85]
 }
 ```
-![wardley--block2](rendered/wardley--block2.svg)
+<img src="rendered/wardley--block2.svg" alt="wardley--block2" width=900px/>
 
 ## Custom evolution stages
 

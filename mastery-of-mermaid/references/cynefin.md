@@ -39,7 +39,7 @@ cynefin-beta
   complex --> complicated : "Pattern identified"
   clear --> chaotic : "Complacency"
 ```
-![cynefin--block1](rendered/cynefin--block1.svg)
+<img src="rendered/cynefin--block1.svg" alt="cynefin--block1" width=1000px/>
 
 - Domain keywords (`complex`, `complicated`, `clear`, `chaotic`, `confusion`) are fixed and can appear in any order; their screen position is always the same regardless of declaration order (Complex top-left, Complicated top-right, Chaotic bottom-left, Clear bottom-right, Confusion center).
 - Items are quoted strings on their own line inside a domain block.

@@ -21,7 +21,7 @@ gantt
     section Ship
     Deploy               :milestone, ship1, after imp1, 0d
 ```
-![gantt--block1](rendered/gantt--block1.svg)
+<img src="rendered/gantt--block1.svg" alt="gantt--block1" width=1000px/>
 
 A colon separates the task title from its metadata; metadata items are comma-separated. Optional tags (`done`, `active`, `crit`, `milestone`) must come first if used. After tags, remaining items are: end date/duration alone; or start (`after <taskId>` or an explicit date) + end; or `<taskId>, start, end` for a task you'll reference later.
 

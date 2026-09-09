@@ -20,7 +20,7 @@ sequenceDiagram
     API-->>Frontend: 201 Created
     Frontend-->>User: Show confirmation
 ```
-![sequence-diagram--block1](rendered/sequence-diagram--block1.svg)
+<img src="rendered/sequence-diagram--block1.svg" alt="sequence-diagram--block1" width=800px/>
 
 `participant` renders as a box; `actor` renders as a stick figure, use it for humans/external entities, `participant` for systems. Declare participants explicitly to control display order (otherwise order-of-first-appearance is used). Alias a participant with `participant A as Alice`.
 
@@ -45,7 +45,7 @@ sequenceDiagram
     Database-->>-Server: Data
     Server-->>-Client: Response
 ```
-![sequence-diagram--block2](rendered/sequence-diagram--block2.svg)
+<img src="rendered/sequence-diagram--block2.svg" alt="sequence-diagram--block2" width=800px/>
 
 `+` after the arrow activates the target (draws an activation bar); `-` before the arrow deactivates the sender. Or use explicit `activate X` / `deactivate X` statements. Activations can stack on the same participant.
 
@@ -85,7 +85,7 @@ sequenceDiagram
         API-->>User: 400 Bad Request
     end
 ```
-![sequence-diagram--block3](rendered/sequence-diagram--block3.svg)
+<img src="rendered/sequence-diagram--block3.svg" alt="sequence-diagram--block3" width=1200px/>
 
 - `alt`/`else`/`end`: mutually exclusive branches.
 - `opt`/`end`: single optional branch (no else).
@@ -110,7 +110,7 @@ sequenceDiagram
         participant B
     end
 ```
-![sequence-diagram--block4](rendered/sequence-diagram--block4.svg)
+<img src="rendered/sequence-diagram--block4.svg" alt="sequence-diagram--block4" width=800px/>
 
 - `autonumber` (optionally `autonumber <start> <increment>`) numbers every arrow automatically.
 - `Note left of X` / `Note right of X` / `Note over X,Y`: attach explanatory notes; text can include `<br/>` for line breaks.
@@ -128,7 +128,7 @@ sequenceDiagram
     destroy Carl
     Alice-xCarl: We are too many
 ```
-![sequence-diagram--block5](rendered/sequence-diagram--block5.svg)
+<img src="rendered/sequence-diagram--block5.svg" alt="sequence-diagram--block5" width=800px/>
 
 ## Participant stereotypes (v11+)
 

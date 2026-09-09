@@ -18,7 +18,7 @@ kanban
   id11[Done]
     id5[define getData]
 ```
-![kanban--block1](rendered/kanban--block1.svg)
+<img src="rendered/kanban--block1.svg" alt="kanban--block1" width=800px/>
 
 - A column is `columnId[Column Title]` (or a bare word if the id and title are the same single word).
 - A task is indented under its column: `taskId[Task description]`.
@@ -32,7 +32,7 @@ kanban
   todo[Todo]
     id3[Update Database Function]@{ ticket: MC-2037, assigned: 'knsv', priority: 'High' }
 ```
-![kanban--block2](rendered/kanban--block2.svg)
+<img src="rendered/kanban--block2.svg" alt="kanban--block2" width=300px/>
 
 Metadata is a `@{ key: value, ... }` block after a task. Supported keys: `assigned` (who owns it), `ticket` (an issue/ticket reference), `priority` (`'Very High'`, `'High'`, `'Low'`, `'Very Low'`).
 
@@ -49,7 +49,7 @@ kanban
   Todo
     id1[Example task]
 ```
-![kanban--block3](rendered/kanban--block3.svg)
+<img src="rendered/kanban--block3.svg" alt="kanban--block3" width=300px/>
 
 When a task has an `assigned` ticket, `ticketBaseUrl` turns the rendered ticket number into a link, with `#TICKET#` substituted for the task's ticket value.
 A frontmatter block always needs an actual diagram body after its closing `---`; frontmatter alone is not a valid diagram.

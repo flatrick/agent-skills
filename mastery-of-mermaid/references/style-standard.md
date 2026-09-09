@@ -133,7 +133,7 @@ flowchart LR
   DQueue -->|dequeue| Deliverer
   Deliverer -.->|deliver| Source
 ```
-![style-standard--block1](rendered/style-standard--block1.svg)
+<img src="rendered/style-standard--block1.svg" alt="style-standard--block1" width=1400px/>
 
 No node palette applied here, birds-eye diagrams may skip it entirely.
 
@@ -210,7 +210,7 @@ flowchart LR
 
   %% Legend: Blue thick = enqueue; green solid = consume; gray dotted = external dependency.
 ```
-![style-standard--block2](rendered/style-standard--block2.svg)
+<img src="rendered/style-standard--block2.svg" alt="style-standard--block2" width=700px/>
 
 ### When not to use a flowchart
 
@@ -274,7 +274,7 @@ flowchart LR
   S[Standalone]:::standalone
   G[Service group]:::service
 ```
-![style-standard--block3](rendered/style-standard--block3.svg)
+<img src="rendered/style-standard--block3.svg" alt="style-standard--block3" width=150px/>
 
 ### Assigning node classes
 

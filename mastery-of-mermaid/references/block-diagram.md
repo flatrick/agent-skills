@@ -11,7 +11,7 @@ block
   columns 3
   a["A label"] b:2 c:2 d
 ```
-![block-diagram--block1](rendered/block-diagram--block1.svg)
+<img src="rendered/block-diagram--block1.svg" alt="block-diagram--block1" width=400px/>
 
 - `columns N` sets how many columns the grid uses; blocks wrap to a new row after N.
 - `id:N` after a block makes it span N columns; blank/no suffix means span 1.
@@ -29,7 +29,7 @@ block
       C
     end
 ```
-![block-diagram--block2](rendered/block-diagram--block2.svg)
+<img src="rendered/block-diagram--block2.svg" alt="block-diagram--block2" width=600px/>
 
 `block:ID ... end` nests a group of blocks inside a parent block, useful for representing a server with multiple services, or any part-of hierarchy. A single-column nested block (`columns 1`) stacks its children vertically, effectively merging them into one tall block.
 
@@ -45,7 +45,7 @@ block
   blockArrowId<["Label"]>(right)
   blockArrowId2<["Label"]>(down)
 ```
-![block-diagram--block3](rendered/block-diagram--block3.svg)
+<img src="rendered/block-diagram--block3.svg" alt="block-diagram--block3" width=300px/>
 
 Block arrows point `right`, `left`, `up`, `down`, or diagonally (`x`, `y`, or combined like `x, down`), useful as directional connectors between rows without a full edge.
 
@@ -57,7 +57,7 @@ block
   A space B
   A-- "X" -->B
 ```
-![block-diagram--block4](rendered/block-diagram--block4.svg)
+<img src="rendered/block-diagram--block4.svg" alt="block-diagram--block4" width=200px/>
 
 Same arrow vocabulary as flowcharts (`-->`, `--`, labeled with `-- "text" -->`). Because block diagrams provide full position control, a `space` is required between two blocks that need to be linked but aren't adjacent in the grid, otherwise there's no room to draw the edge.
 

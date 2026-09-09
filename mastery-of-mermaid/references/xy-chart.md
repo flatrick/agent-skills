@@ -14,7 +14,7 @@ xychart
     bar [5000, 6000, 7500, 8200, 9500, 10500]
     line [5000, 6000, 7500, 8200, 9500, 10500]
 ```
-![xy-chart--block1](rendered/xy-chart--block1.svg)
+<img src="rendered/xy-chart--block1.svg" alt="xy-chart--block1" width=800px/>
 
 - `xychart` (or `xychart-beta`) starts the diagram; add `horizontal` for a horizontal orientation (`xychart horizontal`).
 - Multi-word text values need double quotes; single words don't.
@@ -31,7 +31,7 @@ xychart
     y-axis "Parameters (B)" 0 --> 600
     line [540 "PaLM", 65 "LLaMA-65B"]
 ```
-![xy-chart--block2](rendered/xy-chart--block2.svg)
+<img src="rendered/xy-chart--block2.svg" alt="xy-chart--block2" width=800px/>
 
 Each value in a `line` series can optionally carry a quoted text label. Labels are optional per point, mixing labeled and unlabeled values in the same series is fine. Line-only feature; accepted but ignored on `bar`.
 

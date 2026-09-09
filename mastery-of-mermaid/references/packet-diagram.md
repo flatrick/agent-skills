@@ -19,7 +19,7 @@ packet
 106: "URG"
 107: "ACK"
 ```
-![packet-diagram--block1](rendered/packet-diagram--block1.svg)
+<img src="rendered/packet-diagram--block1.svg" alt="packet-diagram--block1" width=1000px/>
 
 Each line after the title is one field: a bit range (`start-end`) or a single bit position, followed by a colon and a quoted description.
 Fields must be contiguous, covering every bit from 0 with no gaps; a jump straight from `32-63` to `106` fails to render.
@@ -34,7 +34,7 @@ title UDP Packet
 +16: "Destination Port"
 32-47: "Length"
 ```
-![packet-diagram--block2](rendered/packet-diagram--block2.svg)
+<img src="rendered/packet-diagram--block2.svg" alt="packet-diagram--block2" width=1000px/>
 
 `+<count>` sets a field's width in bits, automatically starting where the previous field ended. Mixing `+count` and manual `start-end` ranges on different lines is fine.
 

@@ -18,7 +18,7 @@ gitGraph
    merge develop
    commit
 ```
-![gitgraph--block1](rendered/gitgraph--block1.svg)
+<img src="rendered/gitgraph--block1.svg" alt="gitgraph--block1" width=500px/>
 
 Every gitgraph starts on an implicit `main` branch. `checkout` and `switch` are interchangeable. Commits, by default, get a random id; branches, by default, are drawn in order of first appearance.
 

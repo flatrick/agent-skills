@@ -16,7 +16,7 @@ treemap-beta
         "Men's": 40
         "Women's": 40
 ```
-![treemap--block1](rendered/treemap--block1.svg)
+<img src="rendered/treemap--block1.svg" alt="treemap--block1" width=1000px/>
 
 - A quoted line with no trailing value is a section/parent node.
 - A quoted line with `: value` is a leaf node; its rectangle area is proportional to the value.
@@ -37,7 +37,7 @@ treemap-beta
     "Operations"
         "Salaries": 700000
 ```
-![treemap--block2](rendered/treemap--block2.svg)
+<img src="rendered/treemap--block2.svg" alt="treemap--block2" width=1000px/>
 
 `valueFormat` uses D3 format specifiers (`,` thousands separator, `.1f` one decimal, `.1%` percentage, `$0,0` currency with separator, and combinations).
 

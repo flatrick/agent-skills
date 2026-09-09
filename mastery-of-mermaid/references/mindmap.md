@@ -23,7 +23,7 @@ mindmap
       Pen and paper
       Mermaid
 ```
-![mindmap--block1](rendered/mindmap--block1.svg)
+<img src="rendered/mindmap--block1.svg" alt="mindmap--block1" width=700px/>
 
 If indentation is ambiguous (a line's indent doesn't clearly match an ancestor's), Mermaid resolves it against the nearest smaller-indented ancestor, so keep indentation consistent to avoid surprises.
 
@@ -42,7 +42,7 @@ mindmap
     B(B)
     :::urgent large
 ```
-![mindmap--block2](rendered/mindmap--block2.svg)
+<img src="rendered/mindmap--block2.svg" alt="mindmap--block2" width=300px/>
 
 `::icon(...)` attaches a font icon to the preceding node (the icon font must be registered by the site/renderer). `:::class1 class2` attaches CSS classes the same way flowcharts do, space-separated for multiple classes.
 

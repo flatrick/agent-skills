@@ -15,7 +15,7 @@ timeline
     2005 : YouTube
     2006 : Twitter
 ```
-![timeline--block1](rendered/timeline--block1.svg)
+<img src="rendered/timeline--block1.svg" alt="timeline--block1" width=900px/>
 
 Each line is `{time period} : {event}`; multiple colon-separated events stack under the same period (either on one line, or on continuation lines with a blank period). Both the period and event are plain text, not limited to years.
 
@@ -31,7 +31,7 @@ timeline
     section 21st century
         Industry 4.0 : Internet, robotics
 ```
-![timeline--block2](rendered/timeline--block2.svg)
+<img src="rendered/timeline--block2.svg" alt="timeline--block2" width=900px/>
 
 `section <name>` groups subsequent periods and gives them a shared color scheme. Without any section, each period gets its own color by default (`disableMulticolor: true` turns that off).
 

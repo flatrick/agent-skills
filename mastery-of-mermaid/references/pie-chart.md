@@ -12,7 +12,7 @@ pie title Pets adopted by volunteers
     "Cats" : 85
     "Rats" : 15
 ```
-![pie-chart--block1](rendered/pie-chart--block1.svg)
+<img src="rendered/pie-chart--block1.svg" alt="pie-chart--block1" width=500px/>
 
 - `pie` starts the diagram; `showData` (optional) renders the numeric value after each legend label.
 - `title` is optional.
@@ -37,7 +37,7 @@ pie showData
     "Potassium" : 50.05
     "Magnesium" : 10.01
 ```
-![pie-chart--block2](rendered/pie-chart--block2.svg)
+<img src="rendered/pie-chart--block2.svg" alt="pie-chart--block2" width=500px/>
 
 - `donutHole` (0-0.9) turns the pie into a donut.
 - `legendPosition`: `top`, `bottom`, `left`, `right`, `center`.

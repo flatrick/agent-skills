@@ -15,7 +15,7 @@ stateDiagram-v2
     Moving --> Crash
     Crash --> [*]
 ```
-![state-diagram--block1](rendered/state-diagram--block1.svg)
+<img src="rendered/state-diagram--block1.svg" alt="state-diagram--block1" width=200px/>
 
 `[*]` is the special start/end pseudostate; the direction of the arrow to/from it determines whether it's a start or an end. A transition can carry a label: `s1 --> s2 : A transition`. A state gets a description either via `state "Description" as s2` or `s2 : Description`.
 
@@ -36,7 +36,7 @@ stateDiagram-v2
         namedSimple --> [*]
     }
 ```
-![state-diagram--block2](rendered/state-diagram--block2.svg)
+<img src="rendered/state-diagram--block2.svg" alt="state-diagram--block2" width=400px/>
 
 Nesting can go arbitrarily deep. Transitions between composite states are allowed at the outer level; transitions between internal states of *different* composite states are not.
 
@@ -60,7 +60,7 @@ stateDiagram-v2
     State3 --> join_state
     join_state --> State4
 ```
-![state-diagram--block3](rendered/state-diagram--block3.svg)
+<img src="rendered/state-diagram--block3.svg" alt="state-diagram--block3" width=500px/>
 
 ## Concurrency
 
@@ -78,7 +78,7 @@ stateDiagram-v2
         CapsLockOff --> CapsLockOn : EvCapsLockPressed
     }
 ```
-![state-diagram--block4](rendered/state-diagram--block4.svg)
+<img src="rendered/state-diagram--block4.svg" alt="state-diagram--block4" width=400px/>
 
 ## Notes, direction, comments
 
@@ -94,7 +94,7 @@ stateDiagram-v2
     note left of State2 : Shorter note form
     %% this is a comment
 ```
-![state-diagram--block5](rendered/state-diagram--block5.svg)
+<img src="rendered/state-diagram--block5.svg" alt="state-diagram--block5" width=400px/>
 
 `direction` (`TB`/`LR`/etc.) sets layout, including per-composite-state via a nested `direction` line.
 
@@ -113,7 +113,7 @@ stateDiagram-v2
     class Moving, Crash movement
     Crash:::badBadEvent
 ```
-![state-diagram--block6](rendered/state-diagram--block6.svg)
+<img src="rendered/state-diagram--block6.svg" alt="state-diagram--block6" width=100px/>
 
 Two ways to apply a `classDef`: the `class` statement (works for start/end states too), or the `:::` shorthand at the point of use. **Limitation:** `classDef` styling cannot be applied to or within composite states themselves.
 

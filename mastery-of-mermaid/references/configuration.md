@@ -18,7 +18,7 @@ config:
 flowchart LR
     Hello --> World
 ```
-![configuration--block1](rendered/configuration--block1.svg)
+<img src="rendered/configuration--block1.svg" alt="configuration--block1" width=250px/>
 
 ## Themes
 
@@ -33,7 +33,7 @@ config:
 flowchart LR
     A --> B
 ```
-![configuration--block2](rendered/configuration--block2.svg)
+<img src="rendered/configuration--block2.svg" alt="configuration--block2" width=200px/>
 
 ### Customizing with themeVariables
 
@@ -53,7 +53,7 @@ config:
 flowchart TD
     A[Christmas] -->|Get money| B(Go shopping)
 ```
-![configuration--block3](rendered/configuration--block3.svg)
+<img src="rendered/configuration--block3.svg" alt="configuration--block3" width=160px/>
 
 Mermaid only recognizes hex colors in theme variables, not named colors (`#ff0000` works, `red` does not). Many derived variables (`primaryBorderColor`, `secondaryColor`, etc.) are calculated from `primaryColor` unless set explicitly.
 
@@ -69,7 +69,7 @@ Older diagrams may still use the `%%{init: {...}}%%` directive syntax instead of
 flowchart LR
     A --> B
 ```
-![configuration--block4](rendered/configuration--block4.svg)
+<img src="rendered/configuration--block4.svg" alt="configuration--block4" width=200px/>
 
 Directives apply general (`theme`, `fontFamily`, `logLevel`, `securityLevel`) and diagram-specific (`flowchart.curve`, `sequence.mirrorActors`, and similar) configuration. Multiple `%%init%%`/`%%initialize%%` blocks are merged, later values win.
 
@@ -92,7 +92,7 @@ flowchart TD
     A --> B
     B --> C
 ```
-![configuration--block5](rendered/configuration--block5.svg)
+<img src="rendered/configuration--block5.svg" alt="configuration--block5" width=75px/>
 
 Architecture diagrams (`architecture-beta`) use their own fcose-based layout with separate tuning knobs (`nodeSeparation`, `idealEdgeLengthMultiplier`, `edgeElasticity`, `numIter`, `seed`); see `references/architecture-diagram.md`.
 
@@ -107,7 +107,7 @@ config:
 flowchart LR
     A --> B --> C
 ```
-![configuration--block6](rendered/configuration--block6.svg)
+<img src="rendered/configuration--block6.svg" alt="configuration--block6" width=300px/>
 
 `look: classic` (default) is the traditional style; `look: handDrawn` is a sketch-like style. Not every newer diagram type supports hand-drawn mode (railroad and Wardley maps, for instance, don't).
 
@@ -120,7 +120,7 @@ Surround an expression with `$$` inside a node or message label, in flowcharts a
 flowchart LR
     A["$$x^2$$"] -->|"$$\sqrt{x+3}$$"| B("$$\frac{1}{2}$$")
 ```
-![configuration--block7](rendered/configuration--block7.svg)
+<img src="rendered/configuration--block7.svg" alt="configuration--block7" width=250px/>
 
 MathML is used by default. Set `legacyMathML: true` (and supply KaTeX's own stylesheet) if a target renderer doesn't support MathML.
 

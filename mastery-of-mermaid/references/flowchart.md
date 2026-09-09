@@ -16,7 +16,7 @@ flowchart TD
     Process --> Save[(Save to DB)]
     Save --> End([End])
 ```
-![flowchart--block1](rendered/flowchart--block1.svg)
+<img src="rendered/flowchart--block1.svg" alt="flowchart--block1" width=400px/>
 
 Directions: `TD`/`TB` (top-down, default), `BT` (bottom-up), `LR` (left-right), `RL` (right-left). `graph` is an accepted alias for `flowchart`.
 
@@ -71,7 +71,7 @@ flowchart LR
   e1@{ curve: linear }
   e2@{ curve: natural }
 ```
-![flowchart--block2](rendered/flowchart--block2.svg)
+<img src="rendered/flowchart--block2.svg" alt="flowchart--block2" width=200px/>
 
 ## Subgraphs
 
@@ -87,7 +87,7 @@ flowchart TB
     A --> B
     C --> E
 ```
-![flowchart--block3](rendered/flowchart--block3.svg)
+<img src="rendered/flowchart--block3.svg" alt="flowchart--block3" width=300px/>
 
 Give a subgraph an explicit id with `subgraph id [Title]`. Set a subgraph's own direction with `direction TB` as its first line; that direction is ignored if any node inside links directly to a node outside the subgraph (the subgraph then inherits the parent's direction). Edges to/from a subgraph as a whole are allowed (`one --> two` where `one`/`two` are subgraph ids).
 
@@ -104,7 +104,7 @@ flowchart LR
     classDef warn fill:#f9f,stroke:#333,stroke-width:2px
     style B fill:#bbf,stroke:#f66,stroke-width:2px
 ```
-![flowchart--block4](rendered/flowchart--block4.svg)
+<img src="rendered/flowchart--block4.svg" alt="flowchart--block4" width=200px/>
 
 - `classDef name <css props>` defines a reusable style; apply with `id:::name` inline or `class id1,id2 name` afterward. **Declare all `classDef`s before nodes and edges** (this skill's convention; also easier to scan).
 - `style id <css props>` styles one node directly.

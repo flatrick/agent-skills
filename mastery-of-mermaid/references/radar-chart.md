@@ -17,7 +17,7 @@ radar-beta
   max 100
   min 0
 ```
-![radar-chart--block1](rendered/radar-chart--block1.svg)
+<img src="rendered/radar-chart--block1.svg" alt="radar-chart--block1" width=700px/>
 
 - `axis id["Label"]` defines one spoke; multiple axes can be comma-separated on one line.
 - `curve id["Label"]{v1, v2, ...}` plots one series, values in axis-declaration order, or as key-value pairs (`curve id4{ axis3: 30, axis1: 20 }`) if you'd rather not rely on order.

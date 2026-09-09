@@ -23,7 +23,7 @@ title "Digit Definition"
 
 digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
 ```
-![railroad--block1](rendered/railroad--block1.svg)
+<img src="rendered/railroad--block1.svg" alt="railroad--block1" width=200px/>
 
 Rules: `rule = definition ;` (`::=` also accepted). Terminals are quoted strings; non-terminals are bare identifiers. Sequence is juxtaposition (`A B` in W3C style, `A , B` in ISO style). Choice is `|`. Optional is `A?` (W3C) or `[ A ]` (ISO). Repetition: `A*` zero-or-more, `A+` one-or-more (W3C only), `{ A }` zero-or-more (ISO). Grouping uses `( )`. Comments: `/* ... */` (W3C) or `(* ... *)` (ISO). Exception: `A - B` (match A but not B).
 
@@ -37,7 +37,7 @@ title "Email Address"
 address = local-part "@" domain ;
 local-part = 1*( ALPHA / DIGIT / "." / "-" ) ;
 ```
-![railroad--block2](rendered/railroad--block2.svg)
+<img src="rendered/railroad--block2.svg" alt="railroad--block2" width=400px/>
 
 Alternation is `/` not `|`; repetition is a numeric prefix (`*A` zero-or-more, `1*A` one-or-more, `2*4A` between 2 and 4, `3A` exactly 3); optional is `[ A ]`; terminals can be quoted or numeric (`%x41`, `%d65`, ranges like `%x30-39`); comments start with `;`.
 
@@ -50,7 +50,7 @@ title "Calculator Grammar"
 
 Expression <- Term (("+" / "-") Term)* ;
 ```
-![railroad--block3](rendered/railroad--block3.svg)
+<img src="rendered/railroad--block3.svg" alt="railroad--block3" width=400px/>
 
 Rules use `<-`. Ordered choice is `/` (tries left-to-right). Suffix operators `?`/`*`/`+` work as usual. Prefix predicates: `&A` (lookahead), `!A` (negative lookahead). `.` matches any character. Comments start with `#`.
 

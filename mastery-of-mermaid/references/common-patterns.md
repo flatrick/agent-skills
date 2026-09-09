@@ -24,7 +24,7 @@ flowchart TD
     Prod -->|Yes| Release[Production Release]
     Release --> End([Done])
 ```
-![common-patterns--block1](rendered/common-patterns--block1.svg)
+<img src="rendered/common-patterns--block1.svg" alt="common-patterns--block1" width=400px/>
 
 ### Bug fix workflow
 
@@ -42,7 +42,7 @@ flowchart LR
     Deploy --> Verify[Verify Resolution]
     Verify --> Close[Close Ticket]
 ```
-![common-patterns--block2](rendered/common-patterns--block2.svg)
+<img src="rendered/common-patterns--block2.svg" alt="common-patterns--block2" width=1100px/>
 
 ### CI/CD pipeline
 
@@ -63,7 +63,7 @@ flowchart LR
     ProdDeploy --> Monitor[Monitor]
     Monitor --> End
 ```
-![common-patterns--block3](rendered/common-patterns--block3.svg)
+<img src="rendered/common-patterns--block3.svg" alt="common-patterns--block3" width=1400px/>
 
 ## Authentication patterns
 
@@ -89,7 +89,7 @@ sequenceDiagram
     ResourceServer->>-App: Protected Resource
     App->>-User: Display Data
 ```
-![common-patterns--block4](rendered/common-patterns--block4.svg)
+<img src="rendered/common-patterns--block4.svg" alt="common-patterns--block4" width=900px/>
 
 ### JWT authentication
 
@@ -122,7 +122,7 @@ sequenceDiagram
     API->>API: Verify JWT
     API->>-Client: Protected data
 ```
-![common-patterns--block5](rendered/common-patterns--block5.svg)
+<img src="rendered/common-patterns--block5.svg" alt="common-patterns--block5" width=900px/>
 
 ## API request/response
 
@@ -155,7 +155,7 @@ sequenceDiagram
     Service->>-Gateway: Response
     Gateway->>-Client: HTTP Response
 ```
-![common-patterns--block6](rendered/common-patterns--block6.svg)
+<img src="rendered/common-patterns--block6.svg" alt="common-patterns--block6" width=900px/>
 
 ### Full request/response with layers
 
@@ -171,7 +171,7 @@ sequenceDiagram
     Service-->>-API: DTO
     API-->>-Client: JSON response
 ```
-![common-patterns--block7](rendered/common-patterns--block7.svg)
+<img src="rendered/common-patterns--block7.svg" alt="common-patterns--block7" width=900px/>
 
 ### Error handling flow
 
@@ -189,7 +189,7 @@ flowchart TD
     ErrorHandler --> LogError[Log Error]
     LogError --> ErrorResponse[Error Response]
 ```
-![common-patterns--block8](rendered/common-patterns--block8.svg)
+<img src="rendered/common-patterns--block8.svg" alt="common-patterns--block8" width=500px/>
 
 ## Architecture patterns
 
@@ -243,7 +243,7 @@ flowchart TB
     Order --> Queue
     Product --> Cache
 ```
-![common-patterns--block9](rendered/common-patterns--block9.svg)
+<img src="rendered/common-patterns--block9.svg" alt="common-patterns--block9" width=1400px/>
 
 ### Layered architecture
 
@@ -278,7 +278,7 @@ flowchart TD
     Repo --> ORM
     ORM --> DB
 ```
-![common-patterns--block10](rendered/common-patterns--block10.svg)
+<img src="rendered/common-patterns--block10.svg" alt="common-patterns--block10" width=600px/>
 
 ## Database ER patterns
 
@@ -295,7 +295,7 @@ erDiagram
         uuid parent_id FK "NULLABLE"
     }
 ```
-![common-patterns--block11](rendered/common-patterns--block11.svg)
+<img src="rendered/common-patterns--block11.svg" alt="common-patterns--block11" width=300px/>
 
 ### Junction table (many-to-many)
 
@@ -323,7 +323,7 @@ erDiagram
         varchar title "NOT NULL"
     }
 ```
-![common-patterns--block12](rendered/common-patterns--block12.svg)
+<img src="rendered/common-patterns--block12.svg" alt="common-patterns--block12" width=400px/>
 
 ### Polymorphic relationship
 
@@ -348,7 +348,7 @@ erDiagram
         varchar title
     }
 ```
-![common-patterns--block13](rendered/common-patterns--block13.svg)
+<img src="rendered/common-patterns--block13.svg" alt="common-patterns--block13" width=800px/>
 
 ### Soft deletes
 
@@ -362,7 +362,7 @@ erDiagram
         timestamp deleted_at "NULLABLE"
     }
 ```
-![common-patterns--block14](rendered/common-patterns--block14.svg)
+<img src="rendered/common-patterns--block14.svg" alt="common-patterns--block14" width=300px/>
 
 ### Audit trail
 
@@ -386,7 +386,7 @@ erDiagram
         timestamp created_at "DEFAULT NOW()"
     }
 ```
-![common-patterns--block15](rendered/common-patterns--block15.svg)
+<img src="rendered/common-patterns--block15.svg" alt="common-patterns--block15" width=400px/>
 
 ## State machine templates
 
@@ -415,7 +415,7 @@ stateDiagram-v2
     Completed --> [*]
     Refunded --> [*]
 ```
-![common-patterns--block16](rendered/common-patterns--block16.svg)
+<img src="rendered/common-patterns--block16.svg" alt="common-patterns--block16" width=500px/>
 
 ### User account states
 
@@ -443,7 +443,7 @@ stateDiagram-v2
 
     Deleted --> [*]
 ```
-![common-patterns--block17](rendered/common-patterns--block17.svg)
+<img src="rendered/common-patterns--block17.svg" alt="common-patterns--block17" width=500px/>
 
 ## Class diagram patterns
 
@@ -477,7 +477,7 @@ classDiagram
     IRepository~T~ <|.. BaseRepository~T~
     BaseRepository~T~ <|-- UserRepository
 ```
-![common-patterns--block18](rendered/common-patterns--block18.svg)
+<img src="rendered/common-patterns--block18.svg" alt="common-patterns--block18" width=200px/>
 
 ### Strategy pattern
 
@@ -499,7 +499,7 @@ classDiagram
     PaymentStrategy <|.. PayPalPayment
     PaymentProcessor --> PaymentStrategy
 ```
-![common-patterns--block19](rendered/common-patterns--block19.svg)
+<img src="rendered/common-patterns--block19.svg" alt="common-patterns--block19" width=300px/>
 
 ## Tips for using these templates
 

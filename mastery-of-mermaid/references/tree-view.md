@@ -14,7 +14,8 @@ treeView-beta
         package.json
         README.md
 ```
-![tree-view--block1](rendered/tree-view--block1.svg)
+
+<img src="rendered/tree-view--block1.svg" alt="tree-view--block1" width=200px/>
 
 - Structure comes purely from indentation depth.
 - A trailing `/` on a label marks it a directory (renders bold).
@@ -33,7 +34,8 @@ treeView-beta
 ├── package.json
 └── README.md
 ```
-![tree-view--block2](rendered/tree-view--block2.svg)
+
+<img src="rendered/tree-view--block2.svg" alt="tree-view--block2" width=200px/>
 
 Both light (`├──`, `└──`, `│`) and heavy (`┣━━`, `┗━━`, `┃`) box-drawing characters are recognized; depth is inferred from the branch character's column position, so this format also works for arbitrarily deep nesting pasted straight from a `tree` command.
 
@@ -57,7 +59,9 @@ treeView-beta
 ├── .env ## environment variables
 └── package.json
 ```
-![tree-view--block3](rendered/tree-view--block3.svg)
+
+<img src="rendered/tree-view--block3.svg" alt="tree-view--block3" width=200px/>
+
 
 ## Icons
 
@@ -79,7 +83,8 @@ treeView-beta
         App.tsx
         utils.ts
 ```
-![tree-view--block4](rendered/tree-view--block4.svg)
+
+<img src="rendered/tree-view--block4.svg" alt="tree-view--block4" width=200px/>
 
 ## Configuration and theming
 

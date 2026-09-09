@@ -30,7 +30,7 @@ swimlane-beta LR
   investigate --> answer
   answer --> receive
 ```
-![swimlanes--block1](rendered/swimlanes--block1.svg)
+<img src="rendered/swimlanes--block1.svg" alt="swimlanes--block1" width=1100px/>
 
 An optional direction follows the keyword: `TB`/`TD` (default), `BT`, `LR`, `RL`.
 

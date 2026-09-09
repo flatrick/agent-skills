@@ -26,7 +26,7 @@ ishikawa-beta
         Subject moved too quickly
         Too dark
 ```
-![ishikawa--block1](rendered/ishikawa--block1.svg)
+<img src="rendered/ishikawa--block1.svg" alt="ishikawa--block1" width=600px/>
 
 - The first line (no indentation) is the event/problem, drawn at the fish's head.
 - Each subsequent top-level indented line is a cause category, forming one "bone" branching off the spine.
