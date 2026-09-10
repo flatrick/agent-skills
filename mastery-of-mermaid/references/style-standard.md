@@ -235,6 +235,96 @@ flowchart LR
 ```
 <img src="rendered/style-standard--block2.svg" alt="style-standard--block2" width=700px/>
 
+### Shared-stage convergence (same call, multiple callers)
+
+**When:** two or more flows (composer classes, polymorphic implementations, request handlers) call the *exact same* underlying stage/method for a step, differing only in a few surrounding steps,
+such as their entry point, their exit point, or one parameter (a destination, a flag).
+Common in OOP codebases built from a small set of composers sharing base stages, or any template-method-style composition.
+
+**Discriminator, check before collapsing:** is this the same method/stage reached from two callers, or two different implementations that merely look similar on paper?
+Only collapse the former.
+If the two calls run different code, even if same name or shape, keep them as separate nodes;
+collapsing hides the very difference the diagram exists to show.
+
+**How:**
+
+- Draw each caller's *unique* steps (its own entry point, its own exit or side effect) as distinct nodes.
+- Draw the shared steps once, as plain nodes or a named `subgraph` if the shared group is itself a nameable, reusable unit worth calling out.
+- Route each caller's unique entry into the shared chain with its own edge;
+  style the first-drawn caller's edge as a normal edge and every additional caller's edge with a distinct class (e.g. dashed),
+  so a reader can spot at a glance where a second caller joins the shared spine.
+- If a shared stage's *behavior* varies by caller (a different destination, a different parameter) but it is still one call, don't duplicate the node.
+  Draw one node with multiple labeled outgoing edges, one per caller, converging back onto the next shared node.
+  The branch labels carry the difference; the node stays singular.
+- Don't wrap every caller in its own `subgraph` just to give it a boundary.
+  Reserve `subgraph` for a genuinely nameable, reusable unit (the shared stage group itself, say).
+  A caller with only 2-4 unique steps and no meaningful internal boundary reads fine as plain nodes.
+- This pattern is one option, not the only correct shape.
+  It fits when callers share literal underlying calls; don't force convergence onto flows that only coincidentally look alike.
+
+**Anti-pattern this replaces:** two composers/handlers drawn as two parallel full subgraphs, each redrawing an identical stage sequence (`Load`, `Prepare`, `Convert`, `Validate`, ...) under prefixed IDs (`Load`/`RLoad`, `Conv`/`RConv`).
+This doubles the node count for zero new information, and buries the actual difference between the two paths instead of highlighting it.
+
+#### Worked example
+
+Two composers, `Export` and `Recreate`, share every stage except path resolution (entry) and what happens after validation (exit).
+`Convert` is one call whose destination differs by caller; both branches converge back onto the same `ValidateArtifacts` node.
+
+##### Source
+
+```
+flowchart TB
+  classDef target fill:#81c784,stroke:#2e7d32,color:#1b5e20
+  classDef shared fill:#4db6ac,stroke:#00695c,color:#003c34
+  classDef edgeConsume stroke:#2e7d32,stroke-width:2px
+  classDef edgeShared stroke:#00695c,stroke-width:2px,stroke-dasharray: 3 3
+
+  Path["ResolveNewPath -- Export only"]:::target
+  RPath["Original catalog path -- Recreate only"]:::target
+
+  Load["Load"]:::shared
+  Convert["Convert"]:::shared
+  Validate["ValidateArtifacts"]:::shared
+
+  Path e1@--> Load
+  class e1 edgeConsume
+  RPath e2@--> Load
+  class e2 edgeShared
+  Load --> Convert
+  Convert e3@-->|to the new path -- Export| Validate
+  class e3 edgeConsume
+  Convert e4@-->|to the original catalog path -- Recreate| Validate
+  class e4 edgeShared
+```
+
+##### Rendered
+
+```mermaid
+flowchart TB
+  classDef target fill:#81c784,stroke:#2e7d32,color:#1b5e20
+  classDef shared fill:#4db6ac,stroke:#00695c,color:#003c34
+  classDef edgeConsume stroke:#2e7d32,stroke-width:2px
+  classDef edgeShared stroke:#00695c,stroke-width:2px,stroke-dasharray: 3 3
+
+  Path["ResolveNewPath -- Export only"]:::target
+  RPath["Original catalog path -- Recreate only"]:::target
+
+  Load["Load"]:::shared
+  Convert["Convert"]:::shared
+  Validate["ValidateArtifacts"]:::shared
+
+  Path e1@--> Load
+  class e1 edgeConsume
+  RPath e2@--> Load
+  class e2 edgeShared
+  Load --> Convert
+  Convert e3@-->|to the new path -- Export| Validate
+  class e3 edgeConsume
+  Convert e4@-->|to the original catalog path -- Recreate| Validate
+  class e4 edgeShared
+```
+<img src="rendered/style-standard--block4.svg" alt="style-standard--block4" width=500px/>
+
 ### When not to use a flowchart
 
 - **Single call chain, fewer than 5 steps, one thread** → `sequenceDiagram` is clearer.
@@ -505,15 +595,17 @@ L4  Packet/format diagrams, exact call/line refs  "Byte/layout/exactness"
    or volume? → pick a type from [Pick a diagram type](#pick-a-diagram-type).
 3. **Node budget:** birds-eye 6-10 nodes (12 max); technical 20 or fewer,
    or split into two diagrams.
-4. **Naming:** birds-eye = phase/plain language; technical = grep-friendly, exact identifiers.
-5. **Styling:** technical flowchart → full palette above; birds-eye → subgraphs OK,
+4. **Duplicate callers:** two or more flows in the diagram calling the same underlying stage/method?
+   Don't redraw it per caller — see [Shared-stage convergence](#shared-stage-convergence-same-call-multiple-callers).
+5. **Naming:** birds-eye = phase/plain language; technical = grep-friendly, exact identifiers.
+6. **Styling:** technical flowchart → full palette above; birds-eye → subgraphs OK,
    palette optional.
-6. **Ordering:** declare all `classDef`s first, before nodes and edges.
-7. **Caption:** one-line legend (as an in-diagram `%%` comment) if colors/arrows encode meaning.
-8. **accTitle / accDescr:** set on overview/canonical diagrams.
-9. **Placement:** diagram *after* one sentence saying what it shows,
-   not instead of prose for non-obvious behaviour.
-10. **Update:** diagram changes land in the same change/PR as the behaviour change it documents.
+7. **Ordering:** declare all `classDef`s first, before nodes and edges.
+8. **Caption:** one-line legend (as an in-diagram `%%` comment) if colors/arrows encode meaning.
+9. **accTitle / accDescr:** set on overview/canonical diagrams.
+10. **Placement:** diagram *after* one sentence saying what it shows,
+    not instead of prose for non-obvious behaviour.
+11. **Update:** diagram changes land in the same change/PR as the behaviour change it documents.
 
 ---
 
@@ -533,6 +625,7 @@ L4  Packet/format diagrams, exact call/line refs  "Byte/layout/exactness"
 | Beta diagram type in canonical docs without a render check | May not render on the target platform | Confirm support first |
 | Diagram with no surrounding sentence | Hurts search and accessibility | One intro line + `accDescr` |
 | Fabricated nodes, queues, or relationships not in the source material | Misleading | Verify names *and* connections against code/config; don't invent a trigger or edge just to close a gap in the diagram |
+| Two callers of the same stage/method redrawn as parallel prefixed nodes (`Load`/`RLoad`, `Conv`/`RConv`) | Doubles node count for zero new information; buries the actual difference between the two paths | [Shared-stage convergence](#shared-stage-convergence-same-call-multiple-callers): draw the shared stage once, unique steps as their own nodes |
 
 ---
 
