@@ -65,3 +65,6 @@ frontmatter alone is not a valid diagram.
   a mis-indented task silently attaches to the wrong (or no) column.
 - Reusing a task id across columns (as in the metadata example's `id3`) is allowed by the parser but confusing to read;
   prefer unique ids throughout.
+- **`accTitle` / `accDescr` parse without error but render as an extra column** on the board (verified on mermaid-cli 11.16).
+  This is a silent failure: the exit code is 0 and the board simply grows a bogus lane.
+  Leave both out and describe the board in the surrounding prose.

@@ -66,3 +66,6 @@ see `configuration.md`.
 - A mindmap has no cross-links between branches; if you need that, use a flowchart instead.
 - Because it's marked experimental,
   confirm render support on the target platform before relying on it in a canonical doc.
+- **`accTitle` / `accDescr` are not supported** and make the diagram fail to render outright (verified on mermaid-cli 11.16).
+  Put the description in the surrounding prose instead.
+  If the diagram must carry accessible metadata, `treeView-beta` accepts both and emits a real `<title>`, see `tree-view.md`.

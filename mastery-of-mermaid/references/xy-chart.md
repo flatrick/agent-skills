@@ -55,3 +55,18 @@ and similar).
 Theme variables live under `themeVariables.xyChart` (`backgroundColor`, `titleColor`,
 `plotColorPalette` as a comma-separated color list applied in series order,
 and per-axis label/tick/line colors).
+
+## Common pitfalls
+
+- **The first series renders in a near-invisible pale lavender** against a white background (verified on mermaid-cli 11.16).
+  Set the palette explicitly when a chart has more than one series:
+  ```
+  ---
+  config:
+    themeVariables:
+      xyChart:
+        plotColorPalette: "#1565c0, #c62828, #2e7d32"
+  ---
+  ```
+- **`showLegend: true` renders no legend at all** in 11.16.
+  Label each series with a per-point line label instead (see above), and keep the label away from the plot edge, where it gets clipped.

@@ -48,3 +48,10 @@ each period gets its own color by default (`disableMulticolor: true` turns that 
 - Long text wraps automatically; force a break with `<br>`.
 - Section/period colors come from `cScale0`-`cScale11` (and matching `cScaleLabel0`-`cScaleLabel11` for foreground text) theme variables,
   repeating cyclically past 12 sections.
+
+## Common pitfalls
+
+- **A period cannot contain a colon.**
+  The parser splits each line on `period : event`, so a clock time like `14:02 : Alert fired` is a parse error.
+  Write the time without the colon (`14h02 : Alert fired`), or move it into the event text.
+- Long event text does not wrap by default; keep events short and put detail in the prose below the diagram.

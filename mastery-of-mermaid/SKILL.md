@@ -107,6 +107,25 @@ Several of the exotic types (cynefin, event-modeling, ishikawa, railroad, swimla
 venn, wardley) and many `-beta` types are newer Mermaid additions:
 confirm the target renderer supports them before committing to one in a canonical document.
 
+## Scenario playbooks
+
+The table above answers "which diagram type".
+These files answer "which diagram for the thing my team actually needs to explain".
+Each scenario states the reader question it answers, when to use something else instead, its detail level, and what to swap when adapting it.
+
+| You need to explain | Reference |
+|---|---|
+| How much detail to include, or one system at several zoom levels | `references/scenario-detail-levels.md` |
+| Runtime behaviour: request lifecycles, timeouts, retries and dead-letter queues, caching, event fan-out, sagas, idempotency, backpressure | `references/scenario-runtime.md` |
+| Getting code to production: branching and releases, environment promotion, canary rollout, feature flag lifecycle, zero-downtime migrations | `references/scenario-delivery.md` |
+| How the codebase is organised: dependency rules, call paths, team ownership, where new code belongs, test strategy, API deprecation | `references/scenario-codebase.md` |
+| Running the system: incident timelines, escalation, triage trees, observability, contributing factors, error budgets, postmortem actions | `references/scenario-operations.md` |
+| Reusable generic templates: auth flows, common ER shapes, design patterns | `references/common-patterns.md` |
+
+**Unsure how much detail to include?** Read `references/scenario-detail-levels.md` first.
+It draws one system four times, at four zoom levels, and is the fastest way to calibrate before you draw anything.
+Pitching a diagram at the wrong zoom is a more common failure than getting the syntax wrong.
+
 ## Rules for every diagram
 
 The full canonical style guide, including the node color palette, edge-ID styling,
@@ -186,10 +205,14 @@ say so rather than inventing one.
 
 ## Common patterns
 
-`references/common-patterns.md` has ready-to-adapt templates: API request/response flows,
+`references/common-patterns.md` has ready-to-adapt generic templates: API request/response flows,
 auth flows (OAuth2, JWT), CI/CD pipelines, microservice and layered architectures,
 common ER shapes (self-referencing, junction table, polymorphic, soft delete, audit trail),
 and state-machine templates (order lifecycle, account states).
+
+For a scenario a software team needs to communicate rather than a generic template,
+use the scenario playbooks above.
+They carry the same templates at a stated detail level, with the reader's question and the adaptation notes attached.
 
 ## Output format
 
