@@ -97,6 +97,18 @@ podman run --userns keep-id --user "${UID}" --rm -v /path/to/diagrams:/data:z gh
 - **Docker output owned by root:** add `-u $(id -u):$(id -g)`.
 - **A previously-working diagram suddenly fails to parse:** check whether the Mermaid CLI version changed;
   syntax that's valid in v11 can differ from v9/v10 (see `maxTextSize`/`maxEdges` limits in `references/configuration.md` for another common silent-failure cause on very large diagrams).
+- **`Could not find chrome-headless-shell (ver. X.Y.Z)` / a `ChromeLauncher`/`BrowserLauncher` error before anything renders:**
+  `mmdc` launches Puppeteer's own managed Chromium build, pinned to one exact version per `mermaid-cli` release,
+  not whatever Chrome/Chromium is already on the machine.
+  A cache holding other versions (from other tools, or an earlier `mermaid-cli` install) does not satisfy this — Puppeteer only matches the exact pinned build.
+  Install the build the currently-installed `mermaid-cli` expects:
+  ```bash
+  npx --prefix "$(npm root -g)/@mermaid-js/mermaid-cli" puppeteer browsers install chrome-headless-shell
+  ```
+  For a local/project install, replace the `--prefix` path with the project's own `node_modules/@mermaid-js/mermaid-cli`.
+  This downloads a browser (~150MB) into Puppeteer's cache (`~/.cache/puppeteer` on Linux/macOS, `%LOCALAPPDATA%\puppeteer` on Windows).
+  If a compatible browser is already installed and downloading another one isn't wanted, point Puppeteer at it instead of installing anything:
+  `PUPPETEER_EXECUTABLE_PATH=/path/to/chrome-or-chromium mmdc -i diagram.mmd -o out.svg`.
 
 ## Node.js API (programmatic use)
 
