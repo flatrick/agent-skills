@@ -1,4 +1,4 @@
-# Verification scripts
+# Verification script
 
 Prove the diagrams documented in this skill actually render,
 instead of trusting that the syntax looks right.
@@ -11,62 +11,61 @@ Run this after editing any reference file, and before adding a new diagram type 
 
 - [Node.js](https://nodejs.org) and the Mermaid CLI:
   `npm install -g @mermaid-js/mermaid-cli` (provides the `mmdc` command used to render each block).
-- PowerShell 7+ (`pwsh`) for `verify-diagrams.ps1`.
-  Windows PowerShell 5.1 has not been tested.
-
-A Python equivalent for non-Windows shells without `pwsh` is planned but not yet written; for now,
-PowerShell 7 runs fine on macOS and Linux too (`pwsh verify-diagrams.ps1`).
+- Python 3.9 or newer.
 
 ## Usage
 
 ```
-pwsh ./verify-diagrams.ps1
+python3 scripts/render-diagrams.py                              # render new blocks, wire up markup
+python3 scripts/render-diagrams.py --check                      # validate only, edit nothing
+python3 scripts/render-diagrams.py --file references/erd.md     # limit to one file
+python3 scripts/render-diagrams.py --force                      # re-render images that already exist
 ```
-
-Defaults to scanning the skill folder this script lives in (one level up) and writing temporary render output to the system temp folder,
-which it deletes automatically when every block passes.
-
-Options:
 
 | Flag | Effect |
 |---|---|
-| `-SkillDir <path>` | Scan a different folder of markdown files instead of this skill. |
-| `-OutDir <path>` | Write extracted `.mmd`/rendered `.svg`/error logs somewhere specific. |
-| `-KeepArtifacts` | Keep the output folder even when everything passes. |
-| `-Render` | Keep rendered images and embed fallback links in the docs (see below), instead of validating and discarding. |
+| `--check` | Validate only. Renders every block to a throwaway path and edits nothing. Use this in CI or a pre-commit hook. |
+| `--file <path>` | Limit the run to one markdown file. Repeatable. |
+| `--force` | Re-render images that already exist, not just missing ones. Use after editing an existing diagram. |
+| `--skill-dir <path>` | Scan a different folder of markdown files instead of this skill. |
+| `--artifact-dir <path>` | Where to keep the `.mmd` and full log of any block that fails to render. |
 
-Output is always kept, regardless of `-KeepArtifacts`, when at least one block fails,
-so the failing `.mmd` source and the `.err.log` with the actual Mermaid CLI error are there to inspect.
+## What it does
 
-## Rendering fallback images (`-Render`)
+For each ` ```mermaid ` block it assigns a stable id (`<file stem>--block<n>`) if the block has none,
+renders the SVG to `references/rendered/`,
+inserts the `<!-- mermaid-render: id="..." -->` marker above the fence,
+and inserts an `<img>` fallback link directly below it.
 
-```
-pwsh ./verify-diagrams.ps1 -Render
-```
-
-Some markdown renderers either don't support Mermaid at all,
+The fallback image matters because some markdown renderers either don't support Mermaid at all,
 or only support an older version that can't parse this skill's Mermaid 11.x syntax (edge IDs,
 `@{ curve: ... }`, `wardley-beta`, `swimlane-beta`, C4, and similar).
-`-Render` renders every ` ```mermaid ` block to a real, kept SVG under `references/rendered/`,
-and inserts a fallback image link right after each block so those renderers still show a correct diagram,
-while the raw mermaid source stays in place for renderers that can render it live.
+The raw mermaid source stays in place for renderers that can render it live.
 
-Each block gets a stable id marker (`<!-- mermaid-render: id="..." -->`) directly above the fence,
-bootstrapped automatically the first time a block is rendered.
 The id is what ties a block to its image filename and its embedded link,
-so it's assigned once and never recomputed from position — reordering or adding blocks elsewhere in the file won't reassign or desync an already-rendered image.
+so it's assigned once and never recomputed from position.
+Reordering or adding blocks elsewhere in the file won't reassign or desync an already-rendered image.
 
-This mode edits the source markdown files in place and is meant to be run locally after adding or editing a diagram,
-not as part of CI (use the default, non-`-Render` mode for that).
-It's safe to re-run: existing markers and image links are recognized and updated, not duplicated.
-A block that fails to render leaves its previous marker and image (if any) untouched and is reported as a failure rather than corrupting the doc.
+A width is computed from the rendered SVG's own `viewBox` when an image link is first inserted.
+An existing width is never rewritten, because several are hand-tuned.
+
+## It is safe to re-run
+
+A second run over an unchanged file changes nothing.
+Images that already exist are not re-rendered unless you pass `--force`,
+because `mmdc` embeds nondeterministic ids and re-rendering an unchanged block would churn the file for no reason.
+
+A block that fails to render is reported and left exactly as it was, rather than corrupting the doc.
+Its `.mmd` source and the full `mmdc` log are kept under the artifact directory so you can inspect the exact input and re-run it by hand.
 
 ## What counts as a failure
 
 A block fails when `mmdc` exits non-zero rendering it, a real Mermaid syntax or semantic error,
 not a style-guide opinion.
-The script's own exit code is `0` when every block renders, `1` when at least one fails,
-and `2` when `mmdc` isn't installed at all.
+The reported error is Mermaid's own parse message with its line number and caret;
+the Puppeteer stack trace that `mmdc` prints after it goes to the log file, not the terminal.
+
+Exit codes: `0` when every block renders, `1` when at least one fails, `2` when `mmdc` isn't installed.
 
 ## What this doesn't check
 

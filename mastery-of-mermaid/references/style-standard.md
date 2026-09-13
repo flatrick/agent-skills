@@ -459,6 +459,7 @@ flowchart TB
 
 ##### Rendered
 
+<!-- mermaid-render: id="style-standard--block4" -->
 ```mermaid
 flowchart TB
   classDef target fill:#81c784,stroke:#2e7d32,color:#1b5e20

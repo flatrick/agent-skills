@@ -132,5 +132,6 @@ await run('input.mmd', 'output.svg', {
     mmdc -i docs/diagram.mmd -o docs/diagram.svg
 ```
 
-The `scripts/verify-diagrams.ps1` script in this skill automates the same idea across every diagram documented here,
+The `scripts/render-diagrams.py` script in this skill automates the same idea across every diagram documented here,
 extract every example, render each with `mmdc`, report failures.
+Run it with `--check` to validate without touching the docs.
