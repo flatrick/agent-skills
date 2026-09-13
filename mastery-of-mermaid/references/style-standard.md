@@ -161,6 +161,9 @@ This example keeps node-level edges on purpose.
 Each subgraph here is one stage of a straight pipeline, so the through-line is the information;
 see [Subgraph edges](#subgraph-edges-the-endpoint-decides-the-layout) for when to point at the box instead.
 
+`Process` holding only `Processor` is not a single-node-subgraph violation: it is one phase band in the Collect/Process/Deliver row, and the band stays even at one node so the diagram doesn't need a reshuffle the day `Process` gains a second node.
+See the exception under [Don't wrap a single node in a subgraph](#dont-wrap-a-single-node-in-a-subgraph).
+
 ### Subgraph edges, the endpoint decides the layout
 
 An edge endpoint is not just a label, it changes how Mermaid lays the diagram out.
@@ -313,8 +316,12 @@ Edge IDs, edge labels, and edge classes all work on an edge to a subgraph: `Ext 
 
 #### Don't wrap a single node in a subgraph
 
-A one-node subgraph draws two boxes to say one thing.
+A one-node subgraph with no sibling bands draws two boxes to say one thing.
 Delete the subgraph and keep the node, or fold the node's name into the group label.
+
+**Exception:** a phase band in a birds-eye row of phases (Collect, Process, Deliver) stays even when it currently holds only one node.
+The parallel structure across bands is the information the diagram carries, and a phase gains nodes later without a reshuffle only if the band is already there.
+The anti-pattern is a lone subgraph with no sibling bands, drawn around a single node for no structural reason.
 
 ### Technical flowchart
 
@@ -790,7 +797,7 @@ L4  Packet/format diagrams, exact call/line refs  "Byte/layout/exactness"
 | Diagram with no surrounding sentence | Hurts search and accessibility | One intro line + `accDescr` |
 | Fabricated nodes, queues, or relationships not in the source material | Misleading | Verify names *and* connections against code/config; don't invent a trigger or edge just to close a gap in the diagram |
 | Edge crossing a subgraph boundary aimed at a node inside it | The box is sealed at render time, so the arrow stops at the border and the named node is never shown | Name the subgraph: [Subgraph edges](#subgraph-edges-the-endpoint-decides-the-layout) |
-| A subgraph wrapping a single node | Two boxes to say one thing | Delete the subgraph, keep the node |
+| A subgraph wrapping a single node with no sibling bands | Two boxes to say one thing | Delete the subgraph, keep the node — unless it's one phase band in a row of phases, see [Don't wrap a single node in a subgraph](#dont-wrap-a-single-node-in-a-subgraph) |
 | `Ext --> Process the data` (bare multi-word subgraph title as an edge target) | Parse error, the id is the whole title | Give it an explicit id: `subgraph Proc [Process the data]` |
 | Two callers of the same stage/method redrawn as parallel prefixed nodes (`Load`/`RLoad`, `Conv`/`RConv`) | Doubles node count for zero new information; buries the actual difference between the two paths | [Shared-stage convergence](#shared-stage-convergence-same-call-multiple-callers): draw the shared stage once, unique steps as their own nodes |
 

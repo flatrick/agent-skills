@@ -3,6 +3,9 @@
 Reusable templates for frequently needed scenarios.
 Adjust names and edges to the real system before use; don't ship these as-is.
 
+These templates are generic and detail-level-agnostic.
+For the same material tied to a reader question and a stated detail level (runtime behaviour, delivery/release, codebase structure, operations/incidents), use the scenario playbooks listed in `SKILL.md` instead.
+
 ## Software development workflows
 
 ### Feature development flow
@@ -204,9 +207,7 @@ flowchart TB
         Mobile[Mobile App]
     end
 
-    subgraph API_Layer[API Layer]
-        Gateway[API Gateway]
-    end
+    Gateway[API Gateway]
 
     subgraph Services
         Auth[Auth Service]
@@ -510,3 +511,4 @@ classDiagram
 2. Simplify: remove nodes the diagram's point doesn't need.
 3. Validate with `mmdc` after customizing (see `SKILL.md`).
 4. Keep each diagram focused on one concept; split rather than merge.
+5. Explaining a specific scenario (an incident, a release, a call path) rather than adapting a generic template? Use the matching scenario playbook in `SKILL.md` instead; it carries the same shape tied to a reader question and a detail level.

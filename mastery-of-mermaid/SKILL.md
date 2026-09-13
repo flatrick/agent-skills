@@ -1,6 +1,6 @@
 ---
 name: mastery-of-mermaid
-description: Guide for creating, editing, and validating Mermaid diagrams of every kind (flowcharts, sequence, class, state, ER, C4/architecture, Gantt, and 25+ other types). Use whenever a user asks to diagram, visualize, map out, or document a process, system, schema, architecture, or timeline as a Mermaid diagram, or to create/update an existing .mmd file or mermaid code block. Harness agnostic - written for any AI coding assistant (Claude Code, Codex, Cursor, Pi, OpenCode, etc.), not tied to one vendor's tools.
+description: Guide for creating, editing, and validating Mermaid diagrams of every kind (flowcharts, sequence, class, state, ER, C4/architecture, Gantt, and 25+ other types), plus scenario playbooks for explaining runtime behaviour, delivery/release process, codebase structure, and operations/incidents at the right detail level. Use whenever a user asks to diagram, visualize, map out, or document a process, system, schema, architecture, timeline, release, or incident as a Mermaid diagram, or to create/update an existing .mmd file or mermaid code block. Harness agnostic - written for any AI coding assistant (Claude Code, Codex, Cursor, Pi, OpenCode, etc.), not tied to one vendor's tools.
 ---
 
 # Mastery of Mermaid

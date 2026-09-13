@@ -87,22 +87,28 @@ Square-bracket aliases display a friendlier name than the internal identifier.
 Entity names, relationships,
 and attributes support unicode and basic markdown formatting when quoted.
 
-## Direction, subgraphs, styling
+## Direction and styling
 
 <!-- mermaid-render: id="erd--block4" -->
 ```mermaid
 erDiagram
     direction LR
-    subgraph "Customer Domain"
-        CUSTOMER
-    end
+    classDef core fill:#90caf9,stroke:#1565c0,color:#0d47a1
+
+    CUSTOMER ||--o{ ADDRESS : "ships to"
+    CUSTOMER:::core
 ```
 <img src="rendered/erd--block4.svg" alt="erd--block4" width=300px/>
 
 `direction` sets `TB`/`BT`/`LR`/`RL`.
-Subgraphs (v11+) group entities and can be nested; reference a subgraph by its `id`,
-quoting it if it contains spaces.
-`style`/`classDef`/`class`/`:::` styling works the same as flowcharts.
+`style`/`classDef`/`class`/`:::` styling works the same as in flowcharts,
+applied inline with `ENTITY:::className` or afterwards with `class ENTITY className`.
+
+**Subgraphs do not work in `erDiagram`.**
+On mermaid-cli 11.16 the parser treats `subgraph`, the quoted group title, and `end` as three more entity names,
+and draws each as its own empty entity box.
+There is no error and the exit code is 0, so this only shows up if you look at the picture.
+To show grouping, draw the groups in a `flowchart` alongside the ERD, or split the entities across separate diagrams.
 
 ## Common pitfalls
 
