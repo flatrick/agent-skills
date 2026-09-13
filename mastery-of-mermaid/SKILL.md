@@ -27,7 +27,9 @@ validate it, and style it consistently.
    See `references/style-standard.md` for the full birds-eye vs. technical distinction.
    One document can hold both, as two separate diagrams.
 4. **Generate syntactically correct Mermaid code.**
-   Follow the type-specific reference for exact syntax.
+   Open `references/<type>.md` and follow it.
+   Don't write syntax from memory; the per-type files carry the shapes, arrows,
+   and pitfalls that a recalled example usually gets wrong.
    Use meaningful node IDs and labels,
    and apply the styling conventions in `references/style-standard.md`.
 5. **Save to a file.**
@@ -105,27 +107,52 @@ Several of the exotic types (cynefin, event-modeling, ishikawa, railroad, swimla
 venn, wardley) and many `-beta` types are newer Mermaid additions:
 confirm the target renderer supports them before committing to one in a canonical document.
 
-## Best practices summary
+## Rules for every diagram
 
 The full canonical style guide, including the node color palette, edge-ID styling,
 the birds-eye/technical detail-level ladder, accessibility (`accTitle`/`accDescr`),
-a worked before/after example, an agent checklist, and an anti-patterns table,
+worked don't/do examples, an agent checklist, and an anti-patterns table,
 lives in `references/style-standard.md`.
 Read it before producing a diagram meant for a shared doc rather than a one-off answer.
-Highlights:
 
-- Keep diagrams focused.
+**Do:**
+
+- Keep one diagram to one question.
   A birds-eye overview targets 6-10 nodes (12 max);
   a technical diagram stays under ~20 nodes or splits into two.
 - Declare all `classDef`s before any node or edge line.
-- One link per line when edges need individual styling;
-  don't rely on fragile `linkStyle` indices when your renderer supports edge IDs (`Source id@--> Target`).
+- Point an edge that crosses a subgraph boundary at the subgraph, not at a node inside it.
+  The exception is a subgraph that is one stage of a straight pipeline;
+  see "Subgraph edges" in `references/style-standard.md`.
+- Give every subgraph an explicit id (`subgraph Proc [Process the data]`).
+  A bare multi-word title is a parse error when an edge points at it.
+- Write one link per line when edges need individual styling,
+  and identify them with edge IDs (`Source id@--> Target`).
 - Add `accTitle` and `accDescr` on diagrams meant for docs.
-- Use `%%` comments to explain non-obvious relationships, not to restate what a label already says.
-- Never invent a node, queue, or relationship that isn't in the source material;
-  verify names and connections against actual code/config.
 - Place the diagram after one sentence saying what it shows.
-  A diagram is not a substitute for prose that explains non-obvious behavior.
+
+**Don't:**
+
+- Don't invent a node, queue, or relationship that isn't in the source material.
+  Verify names and connections against actual code/config, and say so when you can't.
+- Don't use `linkStyle` index styling when the renderer supports edge IDs.
+- Don't wrap a single node in a subgraph.
+- Don't use `%%` comments to restate what a label already says.
+- Don't let a diagram replace prose that explains non-obvious behavior.
+- Don't claim a diagram renders correctly unless you actually rendered it.
+
+## When not to draw a diagram
+
+Say so and write prose instead when:
+
+- The relationship is two or three items long.
+  A sentence or a bullet list reads faster than a picture.
+- The content is a flat list, a set of values, or a comparison table.
+  That's a table, not a diagram.
+- You can't verify the entities or connections against source material.
+  A plausible-looking diagram is worse than no diagram, because it reads as authoritative.
+- The answer is a sequence of commands or steps a reader will copy.
+  Use a code block.
 
 ## Configuration and theming
 

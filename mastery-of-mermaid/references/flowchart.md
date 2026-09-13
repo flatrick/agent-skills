@@ -104,13 +104,27 @@ flowchart TB
 ```
 <img src="rendered/flowchart--block3.svg" alt="flowchart--block3" width=300px/>
 
-Give a subgraph an explicit id with `subgraph id [Title]`.
-Set a subgraph's own direction with `direction TB` as its first line;
-that direction is ignored if any node inside links directly to a node outside the subgraph (the subgraph then inherits the parent's direction).
-Edges to/from a subgraph as a whole are allowed (`one --> two` where `one`/`two` are subgraph ids).
+Above, `Processing` is one stage of a straight pipeline, so the edges name the nodes the flow runs through.
+That is the exception, not the default.
 
-A subgraph can be collapsed into a single node with `id@{ view: collapsed }`,
-useful for hiding internals while keeping cross-boundary edges visible.
+**Default: an edge that crosses a subgraph boundary names the subgraph, not a node inside it.**
+Naming the subgraph seals it into its own layout box and draws one arrow to its border.
+Naming a node inside keeps the subgraph a label over nodes that still take part in the parent's layout.
+Pick the endpoint for the shape you want.
+`style-standard.md` has the full rule with a don't/do pair at both simple and complex size.
+
+Give a subgraph an explicit id with `subgraph id [Title]`.
+An id is required to point an edge at it:
+`subgraph Process the data` makes the whole title the id, and `Ext --> Process the data` is a parse error.
+Edge IDs, labels, and edge classes all work on an edge to a subgraph (`Ext e1@-->|submit job| Proc`).
+
+Set a subgraph's own direction with `direction TB` as its first line.
+Mermaid 11.16 honors that direction even when an edge crosses the boundary, and clips the crossing arrow at the box border,
+so naming a node inside such a subgraph claims a target the rendered picture never shows.
+
+`id@{ view: collapsed }` parses but is not honored by mermaid-cli 11.16 under either the `dagre` or `elk` layout;
+the subgraph still renders expanded.
+Don't rely on it, draw the collapsed form as a plain node instead.
 
 ## Styling
 

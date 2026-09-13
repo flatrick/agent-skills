@@ -5,6 +5,7 @@ Palette, edge syntax, diagram-type selection, and detail-level guidance.
 Validated against a weaker model to confirm it can follow this standard unsupervised and produce diagrams that render correctly.
 
 **How to read this doc:** every pattern has **Source** (raw Mermaid to copy) then **Rendered** (live diagram).
+Don't/do pairs show one live block each, so the source you read is the diagram you see.
 Tables and prose have no rendered block.
 
 **Renderer assumption:** examples target Mermaid 11.x (edge IDs, `@{ curve: ... }`).
@@ -155,6 +156,165 @@ flowchart LR
 <img src="rendered/style-standard--block1.svg" alt="style-standard--block1" width=1400px/>
 
 No node palette applied here, birds-eye diagrams may skip it entirely.
+
+This example keeps node-level edges on purpose.
+Each subgraph here is one stage of a straight pipeline, so the through-line is the information;
+see [Subgraph edges](#subgraph-edges-the-endpoint-decides-the-layout) for when to point at the box instead.
+
+### Subgraph edges, the endpoint decides the layout
+
+An edge endpoint is not just a label, it changes how Mermaid lays the diagram out.
+
+- Name the **subgraph** and it becomes a sealed box, laid out on its own, with the arrow stopping at its border.
+- Name a **node inside** and the subgraph stays a label drawn over nodes that still take part in the parent's flow.
+
+**Default:** when an edge crosses a subgraph boundary, name the subgraph.
+
+**Exception:** name a node inside when that subgraph is one stage of a straight pipeline and the edge is part of the same through-line.
+
+**Never:** name a node inside a subgraph that sets its own `direction`.
+Mermaid clips the arrow at the box border, so the picture cannot show the node the source names.
+
+#### Simple case, one edge into a group
+
+The box is a group, not a pipeline stage, so the edge belongs on the box.
+
+##### Don't
+
+`Ext --> C` drags the group flat into the parent's rank order and cuts the boundary diagonally.
+
+<!-- mermaid-render: id="style-standard--block5" -->
+```mermaid
+flowchart LR
+  Ext[Outside]
+  subgraph Box [Box]
+    A[First]
+    B[Second]
+    C[Third]
+  end
+  A --> B --> C
+  Ext --> C
+```
+<img src="rendered/style-standard--block5.svg" alt="style-standard--block5" width=400px/>
+
+##### Do
+
+`Ext --> Box` seals the group, so it keeps its own stacking and takes one arrow at its edge.
+
+<!-- mermaid-render: id="style-standard--block6" -->
+```mermaid
+flowchart LR
+  Ext[Outside]
+  subgraph Box [Box]
+    A[First]
+    B[Second]
+    C[Third]
+  end
+  A --> B --> C
+  Ext --> Box
+```
+<img src="rendered/style-standard--block6.svg" alt="style-standard--block6" width=300px/>
+
+#### Complex case, several edges crossing the same boundary
+
+Two tiers, each with an internal structure the reader does not need in order to follow the tier-to-tier flow.
+
+##### Don't
+
+`Orders --> Cache` and `Orders --> DB` both get clipped at the `Data tier` border,
+so they render as two identical stubs that carry no more information than one arrow would.
+
+<!-- mermaid-render: id="style-standard--block7" -->
+```mermaid
+flowchart LR
+  Web[Web app]
+  Mobile[Mobile app]
+  CLI[CLI]
+
+  subgraph API [API tier]
+    direction TB
+    Gate[Gateway]
+    Auth[Auth service]
+    Orders[Order service]
+  end
+
+  subgraph Data [Data tier]
+    direction TB
+    Cache[(Cache)]
+    DB[(Orders DB)]
+  end
+
+  Web --> Gate
+  Mobile --> Gate
+  CLI --> Gate
+  Gate --> Auth
+  Gate --> Orders
+  Orders --> Cache
+  Orders --> DB
+```
+<img src="rendered/style-standard--block7.svg" alt="style-standard--block7" width=1000px/>
+
+##### Do
+
+Cross-boundary edges name the tier; edges that stay inside a tier keep naming nodes.
+
+<!-- mermaid-render: id="style-standard--block8" -->
+```mermaid
+flowchart LR
+  Web[Web app]
+  Mobile[Mobile app]
+  CLI[CLI]
+
+  subgraph API [API tier]
+    direction TB
+    Gate[Gateway]
+    Auth[Auth service]
+    Orders[Order service]
+  end
+
+  subgraph Data [Data tier]
+    direction TB
+    Cache[(Cache)]
+    DB[(Orders DB)]
+  end
+
+  Web --> API
+  Mobile --> API
+  CLI --> API
+  Gate --> Auth
+  Gate --> Orders
+  API --> Data
+```
+<img src="rendered/style-standard--block8.svg" alt="style-standard--block8" width=1000px/>
+
+#### When not to point at the subgraph
+
+- The subgraph is one stage of a straight pipeline and the edge continues the flow through a specific node,
+  as in the birds-eye worked example above.
+  Pointing at the box there fragments one readable pipeline into a chain of separate boxes.
+- Exactly one edge crosses the boundary and which node it reaches is the point of the diagram
+  (a technical diagram naming the queue that actually receives the write, say).
+- The subgraph is a swimlane.
+  Lanes are ownership bands, not targets; edges always run node to node across them, see `swimlanes.md`.
+
+#### Pitfall, an edge endpoint needs an explicit id
+
+`subgraph Process the data` gives the subgraph a multi-word id, and `Ext --> Process the data` is a parse error.
+Give every subgraph you intend to point at an explicit id.
+
+```
+subgraph Proc [Process the data]
+  ...
+end
+Ext --> Proc
+```
+
+Edge IDs, edge labels, and edge classes all work on an edge to a subgraph: `Ext e1@-->|submit job| Proc`.
+
+#### Don't wrap a single node in a subgraph
+
+A one-node subgraph draws two boxes to say one thing.
+Delete the subgraph and keep the node, or fold the node's name into the group label.
 
 ### Technical flowchart
 
@@ -597,15 +757,18 @@ L4  Packet/format diagrams, exact call/line refs  "Byte/layout/exactness"
    or split into two diagrams.
 4. **Duplicate callers:** two or more flows in the diagram calling the same underlying stage/method?
    Don't redraw it per caller — see [Shared-stage convergence](#shared-stage-convergence-same-call-multiple-callers).
-5. **Naming:** birds-eye = phase/plain language; technical = grep-friendly, exact identifiers.
-6. **Styling:** technical flowchart → full palette above; birds-eye → subgraphs OK,
+5. **Subgraph edges:** does any edge cross a subgraph boundary?
+   Name the subgraph, not a node inside it, unless that subgraph is one stage of a straight pipeline —
+   see [Subgraph edges](#subgraph-edges-the-endpoint-decides-the-layout).
+6. **Naming:** birds-eye = phase/plain language; technical = grep-friendly, exact identifiers.
+7. **Styling:** technical flowchart → full palette above; birds-eye → subgraphs OK,
    palette optional.
-7. **Ordering:** declare all `classDef`s first, before nodes and edges.
-8. **Caption:** one-line legend (as an in-diagram `%%` comment) if colors/arrows encode meaning.
-9. **accTitle / accDescr:** set on overview/canonical diagrams.
-10. **Placement:** diagram *after* one sentence saying what it shows,
+8. **Ordering:** declare all `classDef`s first, before nodes and edges.
+9. **Caption:** one-line legend (as an in-diagram `%%` comment) if colors/arrows encode meaning.
+10. **accTitle / accDescr:** set on overview/canonical diagrams.
+11. **Placement:** diagram *after* one sentence saying what it shows,
     not instead of prose for non-obvious behaviour.
-11. **Update:** diagram changes land in the same change/PR as the behaviour change it documents.
+12. **Update:** diagram changes land in the same change/PR as the behaviour change it documents.
 
 ---
 
@@ -625,6 +788,9 @@ L4  Packet/format diagrams, exact call/line refs  "Byte/layout/exactness"
 | Beta diagram type in canonical docs without a render check | May not render on the target platform | Confirm support first |
 | Diagram with no surrounding sentence | Hurts search and accessibility | One intro line + `accDescr` |
 | Fabricated nodes, queues, or relationships not in the source material | Misleading | Verify names *and* connections against code/config; don't invent a trigger or edge just to close a gap in the diagram |
+| Edge crossing a subgraph boundary aimed at a node inside it | The box is sealed at render time, so the arrow stops at the border and the named node is never shown | Name the subgraph: [Subgraph edges](#subgraph-edges-the-endpoint-decides-the-layout) |
+| A subgraph wrapping a single node | Two boxes to say one thing | Delete the subgraph, keep the node |
+| `Ext --> Process the data` (bare multi-word subgraph title as an edge target) | Parse error, the id is the whole title | Give it an explicit id: `subgraph Proc [Process the data]` |
 | Two callers of the same stage/method redrawn as parallel prefixed nodes (`Load`/`RLoad`, `Conv`/`RConv`) | Doubles node count for zero new information; buries the actual difference between the two paths | [Shared-stage convergence](#shared-stage-convergence-same-call-multiple-callers): draw the shared stage once, unique steps as their own nodes |
 
 ---
@@ -637,6 +803,7 @@ L4  Packet/format diagrams, exact call/line refs  "Byte/layout/exactness"
 | Edge colors (default) | Edge IDs + named edge classes (`edgeEnqueue`, `edgeConsume`, `edgeSend`, ...) |
 | Edge colors (fallback) | `linkStyle` + index legend, only if edge IDs aren't supported |
 | Edge ID syntax | `Source id@--> Target` |
+| Subgraph edges | Crossing edge names the subgraph, not a node inside it |
 | Enqueue / consume / external | `==>` / `-->` / `-.->` |
 | classDef ordering | Declared first, before nodes and edges |
 | Legend | In-diagram `%% Legend: ...` comment when more than one edge color |

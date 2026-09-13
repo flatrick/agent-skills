@@ -267,19 +267,21 @@ flowchart TD
         ORM[ORM/Data Mappers]
     end
 
-    subgraph Database
-        DB[(Database)]
-    end
+    DB[(Database)]
 
-    UI --> BL
-    API --> BL
     BL --> Validation
     BL --> Rules
-    BL --> Repo
     Repo --> ORM
-    ORM --> DB
+
+    Presentation_Layer --> Business_Layer
+    Business_Layer --> Data_Access_Layer
+    Data_Access_Layer --> DB
 ```
 <img src="rendered/common-patterns--block10.svg" alt="common-patterns--block10" width=600px/>
+
+Layer-to-layer edges name the layer, not a node inside it, so the layers stack cleanly instead of staggering.
+`Database` is a plain node, not a one-node subgraph.
+See "Subgraph edges" in `style-standard.md`.
 
 ## Database ER patterns
 
