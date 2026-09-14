@@ -204,6 +204,8 @@ VS Code/Obsidian native support).
 - **Flowcharts:** map real control flow (conditionals, loops, early returns) from the function body.
 - **State diagrams:** derive states from an actual enum, status field, or state-machine definition,
   and transitions from the code paths that mutate it.
+  If no single field or enum actually holds "the state" (status is tracked per-item, or the system's own docs describe it as flexible/non-phased rather than a fixed sequence), a state diagram imposes a rigidity the system doesn't have.
+  Check for that before committing to the shape; a flowchart of available actions and their dependencies is often the honest fit instead.
 - **ER diagrams:** derive entities and relationships from the actual schema (migration files,
   ORM models), not from guessed table names.
 

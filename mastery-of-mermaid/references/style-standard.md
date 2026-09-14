@@ -706,7 +706,8 @@ flowchart LR
   ...
 ```
 
-Include at the top of the diagram block, before `classDef` and nodes.
+**Placement is exact: the first line(s) immediately after the diagram-type keyword** (`flowchart LR`, `stateDiagram-v2`, and similar), before `classDef` and nodes.
+Not before the diagram-type keyword, and not inside a `---\nconfig:\n---` frontmatter block — both are parse errors, `accTitle`/`accDescr` are diagram-body statements, not frontmatter.
 
 ---
 

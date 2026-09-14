@@ -143,6 +143,11 @@ or the `:::` shorthand at the point of use.
   `note right of Foo` where `Foo` is the text after a transition's `:` parses cleanly and then dies at layout with `Error: No such shape: undefined`,
   which names neither the note nor the offending target.
   Check that every note target also appears on the left or right of a `-->`.
+- **Inside a composite state's body, never reference the composite's own alias, as either source or target.**
+  Both `state "Proposed" as P { P --> design }` and `state "Proposed" as P { design --> P }` fail with
+  `Error: Setting P as parent of P would create a cycle` (verified on mermaid-cli 11.16), because `P` is being parented inside its own body.
+  Use the internal start/end pseudostate instead (`[*] --> design`, `design --> [*]`),
+  and put any transition into or out of the composite state as a whole at the outer level, outside the `{ }`.
 
 ## Common patterns
 
