@@ -26,7 +26,14 @@ For full per-type syntax, see the sibling reference files in this folder (`flowc
 **Rule:** one doc may contain **both**, birds-eye first (§ Overview), technical second (§ Detail).
 Don't merge into one overcrowded chart.
 
-**Before drawing:** state the audience in `accDescr` or a one-line caption.
+**"Birds-eye" and "technical" are this skill's vocabulary for audience and detail level.
+They are not Mermaid diagram types**, and they are not something a renderer understands.
+Decide which one you are drawing, then pick a real Mermaid type from the table below.
+
+**Before drawing:** decide the audience, and say it in the sentence that introduces the diagram.
+Keep it out of `accTitle` and `accDescr`.
+Those are read aloud by screen readers and should describe what the diagram *shows*, not which authoring convention produced it.
+An `accDescr` that opens "Birds-eye flowchart showing..." leaks authoring vocabulary into the accessible text, and a later reader cannot tell whether "birds-eye" named a diagram type.
 If the goal is onboarding or discovery,
 default to birds-eye unless the task is debugging a specific path.
 
@@ -567,7 +574,24 @@ flowchart LR
 
 ### Assigning node classes
 
-Two equivalent forms: inline `:::className`, or a trailing `class` statement.
+**The rules differ per diagram type.** Check the matrix below before copying a styling line from one diagram into another.
+This is the single most common way a correct-looking diagram ends up unstyled or corrupted, because three of these cells fail without an error.
+
+| Form | `flowchart` | `classDiagram` | `stateDiagram-v2` |
+|---|---|---|---|
+| `X:::style` inline where the node is used | works | works | works, but only in a transition (`[*] --> Idle:::hot`) |
+| `X:::style` on a standalone declaration | n/a | works (`class A:::hot`) | **silent no-op** (`state Idle:::hot`) |
+| `class X style` (space-separated, trailing) | works | **silent corruption**, adds an empty class named `Xstyle` | works |
+| `class X,Y style` (comma-separated list) | works | **parse error** | works |
+
+Verified on mermaid-cli 11.16.
+`classDiagram` is the outlier in both directions: it is the only type that rejects the comma list, and the only one where the space-separated form damages the diagram instead of styling it.
+See [Applying a style to a class](class-diagram.md#applying-a-style-to-a-class) for the detail.
+
+Only the parse error announces itself.
+The two silent cells exit 0 and render a diagram that simply isn't styled, so confirm colour by looking at the output, not at the exit code.
+
+In a flowchart, both forms below are equivalent.
 
 ```
 App[Web app]:::producer

@@ -166,6 +166,10 @@ They are called out because a parse error elsewhere in the file is easy to misat
 
 When a `classDiagram` won't parse, suspect the `class` styling statements first.
 
+**Don't carry this rule to other diagram types.**
+`class X style` and `class X,Y style` both work in `flowchart` and in `stateDiagram-v2`.
+`classDiagram` is the outlier, see the per-type matrix in `style-standard.md`.
+
 ## Common patterns
 
 See `common-patterns.md` for repository and strategy pattern class diagrams.

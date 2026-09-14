@@ -135,6 +135,10 @@ or the `:::` shorthand at the point of use.
   route the transition through the composite states themselves.
 - The legacy `stateDiagram` (without `-v2`) still works but has fewer features;
   use `stateDiagram-v2` for new diagrams.
+- **Styling rules here are not the class-diagram rules.**
+  `class Idle hot` and `class Idle,Busy hot` both work in `stateDiagram-v2`, and both are wrong in a `classDiagram`.
+  The reverse trap also exists: `state Idle:::hot` on its own line parses and silently applies nothing, while `[*] --> Idle:::hot` inside a transition works.
+  See the per-type matrix in `style-standard.md`.
 - **A note must name a defined state, never a transition label.**
   `note right of Foo` where `Foo` is the text after a transition's `:` parses cleanly and then dies at layout with `Error: No such shape: undefined`,
   which names neither the note nor the offending target.

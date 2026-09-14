@@ -98,8 +98,15 @@ PNG (`-o <filename>.png`) and PDF (`-o <filename>.pdf`) are also supported.
 | Formal grammar/syntax documentation (EBNF, ABNF, PEG) | Railroad diagram | `references/railroad.md` |
 | Cross-functional process with clear step ownership | Swimlanes | `references/swimlanes.md` |
 | Directory/file tree | TreeView | `references/tree-view.md` |
+| How code is grouped into modules, namespaces, or packages | Flowchart with subgraphs | `references/flowchart.md` |
 | Overlap between sets | Venn diagram | `references/venn.md` |
 | Strategic value-chain mapping (build vs. buy, evolution) | Wardley map | `references/wardley.md` |
+
+**Grouping is not flow, and neither is a class diagram.**
+When the question is "what contains what" (handlers inside namespaces, classes inside modules), the answer is a flowchart with subgraphs, or `treeView` for a pure hierarchy.
+Reach for `classDiagram` only when the relationships *between types* are the point, inheritance, implementation, composition.
+A class diagram whose only content is boxes grouped into namespaces is a worse flowchart.
+If the diagram would have no arrows at all, it is a grouping diagram, not a class diagram.
 
 When nothing above fits cleanly, default to a flowchart with subgraphs;
 it is the most flexible type.
