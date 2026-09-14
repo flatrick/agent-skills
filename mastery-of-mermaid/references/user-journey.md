@@ -10,14 +10,14 @@ or any flow where the point is *system* behavior rather than user experience (us
 <!-- mermaid-render: id="user-journey--block1" -->
 ```mermaid
 journey
-    title My working day
-    section Go to work
-      Make tea: 5: Me
-      Go upstairs: 3: Me
-      Do work: 1: Me, Cat
-    section Go home
-      Go downstairs: 5: Me
-      Sit down: 5: Me
+    title New user onboarding
+    section Sign up
+      Create account: 5: User
+      Verify email: 3: User
+      Set up workspace: 2: User, Support
+    section First project
+      Create first project: 4: User
+      Invite teammate: 5: User
 ```
 <img src="rendered/user-journey--block1.svg" alt="user-journey--block1" width=1100px/>
 

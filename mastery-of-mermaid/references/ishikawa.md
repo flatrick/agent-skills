@@ -13,21 +13,21 @@ confirm render support before relying on it in a canonical doc.
 <!-- mermaid-render: id="ishikawa--block1" -->
 ```mermaid
 ishikawa-beta
-    Blurry Photo
+    Checkout Errors Spiked
+    Code
+        Null pointer in discount calc
+        Missing input validation
+    Infrastructure
+        DATABASE
+            Connection pool exhausted
+            Slow query plan
+        CACHE
+            Stale entries
     Process
-        Out of focus
-        Shutter speed too slow
-    User
-        Shaky hands
-    Equipment
-        LENS
-            Inappropriate lens
-            Dirty lens
-        SENSOR
-            Damaged sensor
-    Environment
-        Subject moved too quickly
-        Too dark
+        No canary deploy
+        Alert threshold too high
+    Third-party
+        Payment gateway timeout
 ```
 <img src="rendered/ishikawa--block1.svg" alt="ishikawa--block1" width=600px/>
 

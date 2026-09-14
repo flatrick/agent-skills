@@ -394,30 +394,30 @@ Say in the prose how deep the tree is allowed to get and what stops a cycle, sin
 <!-- mermaid-render: id="common-patterns--block12" -->
 ```mermaid
 erDiagram
-    STUDENT }o--o{ COURSE : enrolls
-    STUDENT ||--o{ ENROLLMENT : has
-    COURSE ||--o{ ENROLLMENT : includes
+    USER }o--o{ PROJECT : joins
+    USER ||--o{ MEMBERSHIP : has
+    PROJECT ||--o{ MEMBERSHIP : includes
 
-    STUDENT {
+    USER {
         uuid id PK
         varchar name "NOT NULL"
     }
 
-    ENROLLMENT {
-        uuid student_id FK, PK
-        uuid course_id FK, PK
-        date enrolled_date
-        varchar grade
+    MEMBERSHIP {
+        uuid user_id FK, PK
+        uuid project_id FK, PK
+        date joined_date
+        varchar role
     }
 
-    COURSE {
+    PROJECT {
         uuid id PK
         varchar title "NOT NULL"
     }
 ```
 <img src="rendered/common-patterns--block12.svg" alt="common-patterns--block12" width=400px/>
 
-**Adapt it:** keep the `STUDENT }o--o{ COURSE` line only while it helps a reader see the logical relationship; the junction table is the thing that actually exists.
+**Adapt it:** keep the `USER }o--o{ PROJECT` line only while it helps a reader see the logical relationship; the junction table is the thing that actually exists.
 If your join table carries no columns beyond the two keys, drop it from the diagram and draw the plain many-to-many instead.
 
 ### Polymorphic relationship

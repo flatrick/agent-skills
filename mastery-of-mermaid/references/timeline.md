@@ -10,12 +10,12 @@ or when the reader needs a Gantt chart's task-duration/dependency view instead (
 <!-- mermaid-render: id="timeline--block1" -->
 ```mermaid
 timeline
-    title History of Social Media Platform
-    2002 : LinkedIn
-    2004 : Facebook
-         : Google
-    2005 : YouTube
-    2006 : Twitter
+    title API version history
+    2021 : v1 released
+    2022 : v2 released
+         : GraphQL endpoint added
+    2023 : REST v1 deprecated
+    2024 : v3 released
 ```
 <img src="rendered/timeline--block1.svg" alt="timeline--block1" width=900px/>
 
@@ -29,12 +29,13 @@ Both the period and event are plain text, not limited to years.
 <!-- mermaid-render: id="timeline--block2" -->
 ```mermaid
 timeline
-    title Industrial Revolution
-    section 17th-20th century
-        Industry 1.0 : Machinery, steam power
-        Industry 2.0 : Electricity, mass production
-    section 21st century
-        Industry 4.0 : Internet, robotics
+    title Platform architecture evolution
+    section Monolith era
+        2018 : Single Rails app
+        2019 : Split out background workers
+    section Microservices era
+        2021 : Extracted payments service
+        2022 : Extracted search service
 ```
 <img src="rendered/timeline--block2.svg" alt="timeline--block2" width=900px/>
 

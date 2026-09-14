@@ -14,9 +14,9 @@ The diagram body is raw CSV with exactly three columns: `source,target,value`.
 ```mermaid
 sankey
 
-Agricultural waste,Bio-conversion,124.729
-Bio-conversion,Liquid,0.597
-Bio-conversion,Losses,26.862
+Signed up,Activated,124.729
+Activated,Converted to paid,0.597
+Activated,Churned,26.862
 ```
 <img src="rendered/sankey--block1.svg" alt="sankey--block1" width=700px/>
 
@@ -39,7 +39,7 @@ Set under `config.sankey`:
 
 ## Common pitfalls
 
-- A value containing a comma must be quoted: `Pumped heat,"Heating and cooling, homes",193.026`;
+- A value containing a comma must be quoted: `Signed up,"Onboarding, in progress",193.026`;
   an unquoted comma is parsed as an extra CSV column and breaks the row.
 - A literal double quote inside a quoted value is escaped by doubling it:
-  `"Heating and cooling, ""homes"""`.
+  `"Onboarding, ""paused"""`.

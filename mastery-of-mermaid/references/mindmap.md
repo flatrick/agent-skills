@@ -15,16 +15,16 @@ Indentation defines the hierarchy, no explicit edges:
 <!-- mermaid-render: id="mindmap--block1" -->
 ```mermaid
 mindmap
-  root((mindmap))
-    Origins
-      Long history
-      Popularisation
-    Research
-      On effectiveness
-      On automatic creation
-    Tools
-      Pen and paper
-      Mermaid
+  root((Search feature))
+    Requirements
+      Full-text search
+      Filters
+    Design
+      API contract
+      Index schema
+    Risks
+      Query latency
+      Index size
 ```
 <img src="rendered/mindmap--block1.svg" alt="mindmap--block1" width=700px/>
 

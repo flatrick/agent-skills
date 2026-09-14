@@ -8,9 +8,9 @@
 <!-- mermaid-render: id="xy-chart--block1" -->
 ```mermaid
 xychart
-    title "Sales Revenue"
+    title "Daily active users"
     x-axis [jan, feb, mar, apr, may, jun]
-    y-axis "Revenue (in $)" 4000 --> 11000
+    y-axis "Users" 4000 --> 11000
     bar [5000, 6000, 7500, 8200, 9500, 10500]
     line [5000, 6000, 7500, 8200, 9500, 10500]
 ```
@@ -32,9 +32,9 @@ xychart
 <!-- mermaid-render: id="xy-chart--block2" -->
 ```mermaid
 xychart
-    x-axis "Date" ["Apr 2022", "Feb 2023"]
-    y-axis "Parameters (B)" 0 --> 600
-    line [540 "PaLM", 65 "LLaMA-65B"]
+    x-axis "Release" ["v1.0", "v2.0"]
+    y-axis "P95 latency (ms)" 0 --> 600
+    line [540 "v1.0", 65 "v2.0"]
 ```
 <img src="rendered/xy-chart--block2.svg" alt="xy-chart--block2" width=800px/>
 

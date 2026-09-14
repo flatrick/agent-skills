@@ -8,10 +8,10 @@ or more than a handful of categories (a bar/xychart reads better past 5-6 slices
 
 <!-- mermaid-render: id="pie-chart--block1" -->
 ```mermaid
-pie title Pets adopted by volunteers
-    "Dogs" : 386
-    "Cats" : 85
-    "Rats" : 15
+pie title Open bugs by severity
+    "Low" : 386
+    "Medium" : 85
+    "High" : 15
 ```
 <img src="rendered/pie-chart--block1.svg" alt="pie-chart--block1" width=500px/>
 
@@ -32,13 +32,13 @@ config:
     textPosition: 0.5
     donutHole: 0.2
     legendPosition: bottom
-    highlightSlice: Potassium
+    highlightSlice: Test
 ---
 pie showData
-    title Key elements in Product X
-    "Calcium" : 42.96
-    "Potassium" : 50.05
-    "Magnesium" : 10.01
+    title Time spent per CI stage (minutes)
+    "Build" : 42.96
+    "Test" : 50.05
+    "Deploy" : 10.01
 ```
 <img src="rendered/pie-chart--block2.svg" alt="pie-chart--block2" width=500px/>
 

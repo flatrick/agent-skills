@@ -21,23 +21,23 @@ double-check it when writing or reviewing a Wardley map.
 <!-- mermaid-render: id="wardley--block1" -->
 ```mermaid
 wardley-beta
-title Tea Shop Value Chain
+title Checkout Value Chain
 
-anchor Business [0.95, 0.63]
-component Cup of Tea [0.79, 0.61]
-component Tea [0.63, 0.81]
-component Kettle [0.43, 0.35]
-component Power [0.10, 0.70]
+anchor Customer [0.95, 0.63]
+component Checkout [0.79, 0.61]
+component Payment-Processing [0.63, 0.81]
+component Fraud-Check [0.43, 0.35]
+component Compute [0.10, 0.70]
 
-Business -> Cup of Tea
-Cup of Tea -> Tea
-Cup of Tea -> Kettle
-Kettle -> Power
+Customer -> Checkout
+Checkout -> Payment-Processing
+Checkout -> Fraud-Check
+Fraud-Check -> Compute
 
-evolve Kettle 0.62
-evolve Power 0.89
+evolve Fraud-Check 0.62
+evolve Compute 0.89
 
-note "Standardising power lets kettles evolve faster" [0.30, 0.49]
+note "Standardising compute lets fraud checks evolve faster" [0.30, 0.49]
 ```
 <img src="rendered/wardley--block1.svg" alt="wardley--block1" width=900px/>
 

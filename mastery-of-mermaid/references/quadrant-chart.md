@@ -9,15 +9,15 @@ or when a single clear answer is the point (a quadrant chart implies a spread of
 <!-- mermaid-render: id="quadrant-chart--block1" -->
 ```mermaid
 quadrantChart
-    title Reach and engagement of campaigns
-    x-axis Low Reach --> High Reach
-    y-axis Low Engagement --> High Engagement
-    quadrant-1 We should expand
-    quadrant-2 Need to promote
-    quadrant-3 Re-evaluate
-    quadrant-4 May be improved
-    Campaign A: [0.3, 0.6]
-    Campaign B: [0.45, 0.23]
+    title Feature backlog: effort vs. impact
+    x-axis Low Effort --> High Effort
+    y-axis Low Impact --> High Impact
+    quadrant-1 Major projects
+    quadrant-2 Quick wins
+    quadrant-3 Fill-ins
+    quadrant-4 Thankless tasks
+    Bulk export: [0.3, 0.6]
+    Dark mode: [0.45, 0.23]
 ```
 <img src="rendered/quadrant-chart--block1.svg" alt="quadrant-chart--block1" width=500px/>
 

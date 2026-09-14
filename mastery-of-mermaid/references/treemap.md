@@ -10,13 +10,13 @@ or when a simple flat pie/bar chart would do (use `pie-chart.md` or `xy-chart.md
 <!-- mermaid-render: id="treemap--block1" -->
 ```mermaid
 treemap-beta
-"Products"
-    "Electronics"
-        "Phones": 50
-        "Computers": 30
-    "Clothing"
-        "Men's": 40
-        "Women's": 40
+"Repository"
+    "src"
+        "api": 50
+        "web": 30
+    "tests"
+        "unit": 40
+        "e2e": 40
 ```
 <img src="rendered/treemap--block1.svg" alt="treemap--block1" width=1000px/>
 
@@ -35,9 +35,9 @@ config:
     valueFormat: '$0,0'
 ---
 treemap-beta
-"Budget"
-    "Operations"
-        "Salaries": 700000
+"Cloud spend"
+    "Compute"
+        "EC2": 700000
 ```
 <img src="rendered/treemap--block2.svg" alt="treemap--block2" width=1000px/>
 

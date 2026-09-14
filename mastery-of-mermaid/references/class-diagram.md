@@ -62,7 +62,7 @@ Add a label: `Customer --> Order : places`.
 Add multiplicity/cardinality on either end: `Customer "1" --> "0..*" Order : places`.
 Common values: `1`, `0..1`, `1..*`, `*`/`0..*`, `m..n`.
 
-Two-way relations combine a relation type on each side: `Animal <|--|> Zebra`.
+Two-way relations combine a relation type on each side: `Handler <|--|> Middleware`.
 
 Lollipop interface: `bar ()-- foo` connects interface `bar` to class `foo`.
 
@@ -117,10 +117,10 @@ Give a namespace a display label with `namespace id["Display Label"]`.
 classDiagram
     direction RL
     note "General note"
-    note for MyClass "Note attached to a specific class"
-    class Animal
-    style Animal fill:#f9f,stroke:#333,stroke-width:4px
-    class Animal:::pink
+    note for OrderService "Note attached to a specific class"
+    class OrderService
+    style OrderService fill:#f9f,stroke:#333,stroke-width:4px
+    class OrderService:::pink
     classDef pink fill:#f9f
 ```
 <img src="rendered/class-diagram--block5.svg" alt="class-diagram--block5" width=250px/>
@@ -134,7 +134,7 @@ See [Applying a style to a class](#applying-a-style-to-a-class) before styling a
 ## Common pitfalls
 
 - Class names support alphanumerics, underscores, and dashes only;
-  escape anything else with backtick-quoted labels: `` class `Animal Class!` ``.
+  escape anything else with backtick-quoted labels: `` class `Payment Handler!` ``.
 - Mermaid does not support two classes with the same name but different generic type parameters.
 - `cssClass` shorthand (`:::className`) cannot be combined on the same line as a relation statement.
 - Notes and namespaces can't be individually styled with `style`, only via themes.

@@ -10,11 +10,11 @@ readability drops fast past 6-8 axes or more than 4-5 overlapping curves.
 <!-- mermaid-render: id="radar-chart--block1" -->
 ```mermaid
 radar-beta
-  title Grades
-  axis m["Math"], s["Science"], e["English"]
-  axis h["History"], g["Geography"]
-  curve a["Alice"]{85, 90, 80, 70, 75}
-  curve b["Bob"]{70, 75, 85, 80, 90}
+  title Service quality scorecard
+  axis p["Performance"], r["Reliability"], s["Security"]
+  axis m["Maintainability"], t["Test coverage"]
+  curve a["Checkout API"]{85, 90, 80, 70, 75}
+  curve b["Search API"]{70, 75, 85, 80, 90}
 
   max 100
   min 0
