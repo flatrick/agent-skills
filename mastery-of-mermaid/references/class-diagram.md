@@ -126,7 +126,10 @@ classDiagram
 <img src="rendered/class-diagram--block5.svg" alt="class-diagram--block5" width=250px/>
 
 `direction` (`TB`, `BT`, `LR`, `RL`) sets layout direction.
-`style`/`classDef`/`class`/`:::` work the same as in flowcharts.
+
+**Styling does not work the same as in flowcharts.**
+`classDef`, `style` and inline `:::` work here, but the flowchart habit of assigning a style with a space-separated `class` statement does not, and fails silently.
+See [Applying a style to a class](#applying-a-style-to-a-class) before styling anything.
 
 ## Common pitfalls
 
@@ -135,6 +138,33 @@ classDiagram
 - Mermaid does not support two classes with the same name but different generic type parameters.
 - `cssClass` shorthand (`:::className`) cannot be combined on the same line as a relation statement.
 - Notes and namespaces can't be individually styled with `style`, only via themes.
+
+### Applying a style to a class
+
+Attach the style with `:::`, with no space.
+Verified on mermaid-cli 11.16.
+Three of the four forms below are wrong and two of them fail silently, so `mmdc` exiting 0 is not evidence the diagram is styled.
+
+| Form | Result |
+|---|---|
+| `class A:::styleName` | **Works.** Valid at the declaration (`class A:::s { ... }`) or on its own line. |
+| `class A,B styleName` | Parse error. `classDiagram` does not accept a comma-separated name list the way `flowchart` does. |
+| `class A styleName` | **Silently wrong.** Applies no style and adds an extra empty class box named `AstyleName` to the diagram. |
+| `cssClass "A,B" styleName` | Parses and tags the nodes, but a `classDef` fill does not take effect. |
+
+The trap is the second row leading to the third.
+Hitting the parse error on `class A,B styleName` and expanding it to one `class A styleName` line per node looks like the obvious fix, and it trades a loud failure for a corrupted diagram that still exits 0.
+Expand to one `class A:::styleName` line per node instead, or put `:::` on each declaration.
+
+### Two things that do work, despite looking fragile
+
+Both render correctly on mermaid-cli 11.16.
+They are called out because a parse error elsewhere in the file is easy to misattribute to them, and deleting them throws away real information about the design:
+
+- `<<interface>>`, `<<enumeration>>` and `<<abstract>>` annotations inside a class body's braces.
+- Generic type parameters, in both a class name (`class Repo~T~`) and a member (`+findAll() List~T~`).
+
+When a `classDiagram` won't parse, suspect the `class` styling statements first.
 
 ## Common patterns
 

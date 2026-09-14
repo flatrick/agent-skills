@@ -135,6 +135,10 @@ or the `:::` shorthand at the point of use.
   route the transition through the composite states themselves.
 - The legacy `stateDiagram` (without `-v2`) still works but has fewer features;
   use `stateDiagram-v2` for new diagrams.
+- **A note must name a defined state, never a transition label.**
+  `note right of Foo` where `Foo` is the text after a transition's `:` parses cleanly and then dies at layout with `Error: No such shape: undefined`,
+  which names neither the note nor the offending target.
+  Check that every note target also appears on the left or right of a `-->`.
 
 ## Common patterns
 
