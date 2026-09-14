@@ -1,117 +1,124 @@
-# omp (Pi)
+# OMP (Pi)
 
-**Use for:** a local, cheap, genuinely weak model to test instructions against, and for one-shot delegated tasks.
-**Avoid for:** work needing a frontier model, or anything where a slow cold start matters.
+Use OMP as a local, weaker model for instruction probes and bounded delegated tasks.
+Do not use it for work that needs a frontier model or a predictable cold-start time.
 
-Everything below was verified by running it on 2026-09-14, against `omp v18.1.19`.
-Re-verify if the version has moved.
+Everything below, including the approval-mode table, was checked on 2026-09-14 against `omp v18.1.21`.
+Re-verify after a version change.
 
-## The model it runs
+## Proving-ground command
 
+Use the maintained runner for repeatable probes:
+
+```bash
+python3 "<skills-root>/harness-driver/scripts/harness_driver.py" \
+  --harness omp \
+  --prompt-file "/absolute/path/to/prompt.txt" \
+  --cwd "/absolute/path/to/empty-cwd" \
+  --timeout 300 \
+  --out "/absolute/path/to/new-run-directory"
 ```
-omp -p --no-tools "Reply with only the exact name of the model answering this, nothing else." </dev/null
+
+The runner invokes this command shape:
+
+```bash
+omp -p --mode=json --no-tools --no-session \
+  --no-extensions --no-skills --no-rules \
+  --system-prompt="Follow the user message. Answer the task directly." \
+  --cwd="<empty-cwd>" "<prompt>" </dev/null
 ```
 
-On this machine that returns `llama-cpp/Qwen3.6-35B-A3B-IQ4-coder`, a local llama.cpp-served MoE with roughly 3B active parameters at IQ4 quantization.
-That is a fair weak-model proxy, not a toy.
-It has decent baseline knowledge and follows clear instructions well; it goes wrong when an instruction is confidently misleading, not when it is merely terse.
-In `--mode=json` the `provider` and `model` fields on every assistant message carry the same answer without spending a turn.
+The flags isolate different inputs:
+
+| Flag | Effect |
+|---|---|
+| `--no-tools` | Disables OMP's built-in model tools |
+| `--no-extensions` | Disables extension discovery |
+| `--no-skills` | Disables skill discovery and loading |
+| `--no-rules` | Disables rule discovery and loading |
+| `--no-session` | Prevents conversation persistence |
+| `--system-prompt` | Pins a minimal system prompt so the probe measures the instructions under test, not OMP's own default agentic framing |
+| `--cwd` | Starts the child in an explicit disposable directory |
+
+These flags do not make the OMP process read-only.
+OMP 18.1.21 initializes runtime state below `~/.omp` before inference, including its SQLite store and daemon client records.
+A workspace-restricted Codex session must request host permission for the concrete OMP or Python runner command.
+OMP's `--approval-mode` controls model tool calls and cannot grant filesystem access denied by the supervising runtime.
 
 ## Always close stdin
 
-```
+Close stdin on every direct invocation:
+
+```bash
 omp -p "..." </dev/null
 ```
 
-**Without `</dev/null` it can hang forever in `phase: readPipedInput`.**
-This bites when stdout is redirected to a file, which is exactly what you do when capturing output.
-It does not always reproduce, which makes it worse, not better.
-Close stdin on every invocation and the problem goes away.
+Without `</dev/null`, OMP can wait indefinitely in `phase: readPipedInput` when a caller captures or redirects stdout.
+The Python runners use `subprocess.DEVNULL`, so callers do not add shell redirection around those commands.
 
-## Proving ground, no side effects
+## JSONL output and model identity
 
-```
-omp -p --no-tools "<the instructions under test>
+`--mode=json` emits a JSONL event stream.
+Observed event types include `session`, `agent_start`, `turn_start`, `message_start`, `message_update`, `message_end`, `turn_end`, and `agent_end`.
 
-<the task>" </dev/null
-```
+Treat a run as complete only when all of these conditions hold:
 
-`--no-tools` disables every built-in tool, so the run cannot touch anything.
-This is the default mode for testing instructions.
-Feed it the actual text a reader would have, then read what it produces.
+1. The process exits zero.
+2. A `turn_end` event contains an assistant message with non-empty `content` entries whose `type` is `text`.
+3. A later `agent_end` event has `isTerminal: true`.
+4. A tool-free probe has no tool results.
 
-## Machine-readable output
+Read `provider` and `model` from the assistant message instead of asking the model to identify itself.
+On this machine, a successful 18.1.21 run reported provider `llama-cpp` and model `Qwen3.6-35B-A3B-IQ4-coder`.
 
-`--mode=json` emits a JSONL event stream, not a single JSON document.
-Event types seen: `session`, `agent_start`, `turn_start`, `message_start`, `message_update`, `message_end`, `turn_end`, `agent_end`.
+An exit code of zero without the terminal events is an invalid result, not an empty answer.
+Keep raw stdout and stderr when parsing fails.
+The maintained runners store the event stream, stderr, extracted answer, and normalized result separately.
 
-The final answer is on the last `turn_end` event, in `message.content[]`, in the entries with `type == "text"`.
-Note that `content[]` also carries `thinking` entries, so filtering on type matters.
+## Approval modes for worker tasks
 
-```python
-import json
-final = None
-for line in open(path):
-    line = line.strip()
-    if not line.startswith("{"):
-        continue
-    try:
-        event = json.loads(line)
-    except ValueError:
-        continue
-    if event.get("type") == "turn_end":
-        final = event["message"]
-print("".join(c["text"] for c in final["content"] if c["type"] == "text"))
-```
+The following was re-exercised on 2026-09-14 against `omp v18.1.21` in a throwaway git worktree:
 
-Plain text mode prints a `Working...` line before the answer, so strip it when parsing without `--mode=json`.
-
-## Approval, what each level actually permits
-
-The default is safe.
-Out of the box `omp -p` **refuses to write**, and says so in prose rather than failing, which means an unwary caller reads a polite explanation and a zero exit code instead of a result.
-
-| Flag | File writes | Arbitrary shell |
+| Flag | Observed file writes | Observed arbitrary shell |
 |---|---|---|
-| *(default)* | refused | refused |
-| `--approval-mode=write` | allowed | refused |
-| `--approval-mode=yolo`, `--auto-approve` | allowed | allowed |
+| Default | Refused | Refused |
+| `--approval-mode=write` | Allowed | Refused |
+| `--approval-mode=yolo`, `--auto-approve` | Not exercised | Not exercised |
 
-`--approval-mode=write` is the setting to reach for when a task needs to produce files.
-Verified: it wrote `proof.txt`, and it declined to run a shell command.
+Under `write` mode, asked to both write a file and run a shell `touch`, OMP created the file through its write tool
+and declined the shell call, telling the caller the bash tool call needs approval or `yolo` mode.
+The approval level limits tools, not all filesystem effects.
 
-One subtlety worth knowing.
-Asked to `touch` a file under `write` mode, the model reported that bash was blocked and then created the file anyway through the write tool.
-So `write` bounds *which tool* it may use, not *what effects* it can achieve on the filesystem.
-Scope the directory, do not rely on tool choice to limit blast radius.
+Do not use `yolo` or `--auto-approve` unless the user explicitly requests the broader authority.
+Keep the supervising runtime's approval separate from OMP's model-tool approval.
 
-`yolo` and `--auto-approve` were not exercised here.
-Do not reach for either without the user explicitly asking.
+## Worker scoping
 
-## Scoping
+For a tool-enabled worker, use a unique throwaway git worktree and an explicit `--cwd`:
 
-- `--cwd=<dir>` sets the working directory. Verified: writes land there.
-- `--add-dir=<dir>` adds a workspace directory beyond the working one, repeatable.
-- `--tools=<a,b>` restricts which built-in tools are enabled.
-- `--profile=<name>` isolates auth, sessions, settings and caches from the user's interactive use.
-- `--no-session` keeps the run ephemeral.
-
-For any run with writes enabled, combine a throwaway git worktree with `--cwd`:
-
+```bash
+run_dir="$(mktemp -d /tmp/harness-driver.XXXXXX)"
+git worktree add "$run_dir" HEAD
+omp -p --cwd="$run_dir" --approval-mode=write "<task>" </dev/null
+git -C "$run_dir" diff
+git worktree remove "$run_dir"
 ```
-git worktree add /tmp/hd-run HEAD
-omp -p --cwd /tmp/hd-run --approval-mode=write "<task>" </dev/null
-git -C /tmp/hd-run diff        # review before anything is kept
-git worktree remove /tmp/hd-run --force
-```
+
+Review and retain any wanted diff before removing the worktree.
+A worktree contains relative writes and makes them reviewable, but it does not prevent the child from addressing absolute paths.
+Use the supervising runtime's sandbox or permission system for that boundary.
+
+Other relevant flags include `--add-dir`, `--tools`, and `--profile`.
+Do not add them to the proving-ground runner without a measured need because each one changes the evaluation environment.
 
 ## Latency
 
-Cold start is slow and variable.
-One run sat in startup past 120 seconds.
-Budget generously, several minutes for a tool-using task, and run it in the background rather than blocking on it.
+Cold start varies.
+A successful one-word response on this machine took about 13 seconds, while an earlier run remained in startup past 120 seconds.
+Use a timeout of several minutes for real probes and preserve partial output when it expires.
 
-## Other flags worth knowing
+## Current support boundary
 
-`--model=<fuzzy>` picks the engine, `--smol`/`--slow`/`--plan` set role models, `-c`/`--continue` and `-r`/`--resume` carry a session forward, `--system-prompt` and `--append-system-prompt` shape the run.
-These come from `omp --help` and were not individually exercised.
+The repository has a verified OMP child adapter only.
+Claude Code and Codex can both supervise it.
+Codex and OpenCode child adapters need their own references, output parsers, approval tests, and live verification before they are added.

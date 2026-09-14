@@ -61,8 +61,12 @@ Common causes, all fixed at the invocation and none in the skill:
 
 - The context was the whole skill rather than the section a reader would consult.
 - Tools were enabled, so the model reached the answer by trial and error and the probe measured nothing about the instructions.
+- Ambient extensions, skills, or rules were loaded and changed what the model saw.
 - The session carried state from a previous run. Every probe run must be cold.
 - The run hit the timeout and the partial output was read as a wrong answer.
+- The supervising runtime denied OMP access to its own state files before inference.
+- OMP exited zero without a complete `turn_end` and terminal `agent_end` event.
+- The JSONL stream was malformed or truncated.
 
 ## Writing the finding down
 

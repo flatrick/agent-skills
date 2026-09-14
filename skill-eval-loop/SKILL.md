@@ -1,8 +1,6 @@
 ---
-name: "Skill Eval Loop"
-description: Iteratively evaluate and improve a skill by running it against a real harness (omp/Pi, Codex) and fixing what the model actually gets wrong, rather than what you imagine it would. Runs edit, probe, judge, refine as a loop with an operator gate, a recorded baseline, and an explicit stopping rule. Use when authoring or hardening a skill meant for weaker models, or when asked to evaluate how well a skill holds up.
-category: QA
-tags: [skill-authoring, evaluation, harness, weak-model, proving-ground, loop]
+name: skill-eval-loop
+description: Use when evaluating or hardening an existing skill against a real agentic CLI, especially when weaker-model behavior may expose ambiguous instructions.
 ---
 
 # Skill Eval Loop
@@ -14,7 +12,10 @@ Run it against a model that does not, and fix what that model actually gets wron
 **Use for:** hardening a skill aimed at weaker models, or evaluating whether an existing skill holds up.
 **Avoid for:** a skill nobody has drafted yet. Write something first; this loop sharpens a draft, it does not produce one.
 
-Calling the harness is `harness-driver`'s job. This skill is about what to do with what comes back.
+Calling and interpreting the harness is `harness-driver`'s job.
+This skill owns repeated probes, preserved evidence, judgment, and refinement.
+Claude Code is the primary supervisor.
+Codex and other runtimes follow the same workflow through their native command and approval tools.
 
 ## Before the loop
 
@@ -31,12 +32,20 @@ Include at least one probe covering the thing you are least sure about.
 
 **3. Record a baseline before changing anything.**
 
-```
-python3 scripts/probe.py --context <excerpt.md> --task "<probe>" --runs 3 --out runs/00-baseline
+```bash
+python3 "<skills-root>/skill-eval-loop/scripts/probe.py" \
+  --context "/absolute/path/to/excerpt.md" \
+  --task "<probe>" \
+  --runs 3 \
+  --out "/absolute/path/to/runs/00-baseline"
 ```
 
 Without a baseline you cannot tell a fix from noise.
 The script runs each probe several times from a cold session, because one run of a non-deterministic model is an anecdote.
+Resolve the script from the loaded skill's directory, not from the current working directory.
+The output directory must not exist.
+The script creates an empty child working directory under the output directory unless you pass a disposable directory through `--cwd`.
+On Codex, request host permission for this command when OMP needs to write its runtime state under `~/.omp`.
 
 ## The loop
 
@@ -48,6 +57,9 @@ Two simultaneous edits and an improved result tell you nothing about which one w
 **Step 2, probe.**
 Re-run the affected probes into a new run directory, never overwriting the baseline.
 Same probes, same wording. Changing the probe and the skill together invalidates the comparison.
+Read `manifest.json` for batch status, each `run-NNN/result.json` for execution status, and each `run-NNN/answer.txt` for the answer.
+The command exits nonzero when a child run fails or produces no complete answer.
+Exit zero means the measurement completed, not that the skill passed.
 
 **Step 3, judge.**
 Read the runs. Do not score them from exit codes.
@@ -88,7 +100,7 @@ Do not stack up questions across passes; raise each at the gate of the pass that
 
 Stop when one of these is true, and say which:
 
-- A full pass produced no changes. The skill is converged against this probe set.
+- After the last edit, every probe in the set was re-run and a complete review produced no further changes. The skill is converged against this probe set.
 - Remaining failures are all classified as model limitations, not skill defects.
 - The operator calls it.
 - You have burned the agreed budget of passes. Report where it stands rather than continuing silently.
