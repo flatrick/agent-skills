@@ -19,6 +19,9 @@ python3 "<skills-root>/harness-driver/scripts/harness_driver.py" \
   --out "/absolute/path/to/new-run-directory"
 ```
 
+Pass only the runner options shown above.
+Do not append the raw OMP flags from the next command; the runner adds them internally.
+
 The runner invokes this command shape:
 
 ```bash

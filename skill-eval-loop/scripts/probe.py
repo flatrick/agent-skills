@@ -160,19 +160,18 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(str(error), file=sys.stderr)
         return 2
 
+    child_cwd = Path(args.cwd).resolve() if args.cwd else output_dir / "child-cwd"
+    if args.cwd and not child_cwd.is_dir():
+        print("child cwd is not a directory: {}".format(child_cwd), file=sys.stderr)
+        return 2
+
     try:
         output_dir.mkdir(parents=True, exist_ok=False)
     except FileExistsError:
         print("output directory already exists: {}".format(output_dir), file=sys.stderr)
         return 2
 
-    if args.cwd:
-        child_cwd = Path(args.cwd).resolve()
-        if not child_cwd.is_dir():
-            print("child cwd is not a directory: {}".format(child_cwd), file=sys.stderr)
-            return 2
-    else:
-        child_cwd = output_dir / "child-cwd"
+    if not args.cwd:
         child_cwd.mkdir()
 
     context_records = []

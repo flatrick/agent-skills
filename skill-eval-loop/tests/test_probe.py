@@ -114,6 +114,19 @@ class ProbeCliTests(unittest.TestCase):
             self.assertEqual(completed.returncode, 2)
             self.assertEqual(marker.read_text(encoding="utf-8"), "unchanged")
 
+    def test_cli_rejects_invalid_child_cwd_before_creating_output_directory(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            fake_bin = root / "bin"
+            fake_bin.mkdir()
+            out = root / "runs"
+
+            completed = self.run_probe(root, fake_bin, out, "--cwd", str(root / "missing"))
+
+            self.assertEqual(completed.returncode, 2)
+            self.assertIn("child cwd is not a directory", completed.stderr)
+            self.assertFalse(out.exists())
+
     def test_cli_returns_failure_when_any_child_fails_and_keeps_diagnostics(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
