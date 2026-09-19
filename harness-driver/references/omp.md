@@ -122,6 +122,6 @@ Use a timeout of several minutes for real probes and preserve partial output whe
 
 ## Current support boundary
 
-The repository has a verified OMP child adapter only.
-Claude Code and Codex can both supervise it.
-Codex and OpenCode child adapters need their own references, output parsers, approval tests, and live verification before they are added.
+The repository has verified OMP and Codex child adapters, both for proving-ground runs.
+Claude Code and Codex can supervise either.
+An OpenCode child adapter needs its own reference, output parser, approval tests, and live verification before it is added.

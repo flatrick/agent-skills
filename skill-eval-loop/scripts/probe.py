@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run one instruction probe several times and preserve reproducible OMP evidence."""
+"""Run one instruction probe several times and preserve reproducible harness evidence."""
 
 import argparse
 import hashlib
@@ -45,7 +45,7 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     task.add_argument("--task-file", help="File containing the task text.")
     parser.add_argument("--runs", type=int, default=3)
     parser.add_argument("--out", required=True, help="New directory for this pass.")
-    parser.add_argument("--harness", default="omp", choices=["omp"])
+    parser.add_argument("--harness", default="omp", choices=["codex", "omp"])
     parser.add_argument("--model")
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument(

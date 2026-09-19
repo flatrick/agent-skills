@@ -45,7 +45,8 @@ An exit code of 0 means the process ended, not that the work is right.
 
 **Never point a tool-enabled harness at a real working tree.**
 Give it a throwaway git worktree so relative writes arrive as a reviewable diff.
-A worktree is not an operating-system sandbox and does not prevent absolute-path writes.
+For OMP the worktree is only a diff boundary, not an operating-system sandbox, and it does not prevent absolute-path writes.
+Codex under `-s workspace-write` does block them, but check `references/codex.md` before relying on that, because the system temp directory is inside its writable set.
 
 **Escalate approval per invocation, never globally.**
 Every harness here has a per-run flag for this. Editing the harness's global config to grant permissions changes the user's environment behind their back, and it persists after you are done.
@@ -65,11 +66,12 @@ The failure is usually a confident wrong instruction, not missing capability.
 | Harness | Binary | Reference |
 |---|---|---|
 | omp (Pi) | `omp` | `references/omp.md` |
-| Codex | `codex` | Not implemented as a child harness |
+| Codex | `codex` | `references/codex.md` |
 | OpenCode | `opencode` | Not implemented as a child harness |
 
-Only OMP has an executable adapter in this repository.
-Claude Code, Codex, OpenCode, and Pi can supervise that adapter when they can run Python and OMP.
+OMP and Codex have executable adapters in this repository, both for proving-ground runs.
+Codex worker mode is documented but not automated.
+Claude Code, Codex, OpenCode, and Pi can supervise either adapter when they can run Python and the child binary.
 Check the binary exists (`command -v <name>`) before planning around it.
 Availability differs per machine.
 
