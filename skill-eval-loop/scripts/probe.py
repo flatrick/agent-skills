@@ -217,6 +217,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         return 3
 
     completed = sum(1 for result in results if result["status"] == "completed")
+    warnings = []
+    for result in results:
+        for warning in result.get("warnings") or []:
+            if warning not in warnings:
+                warnings.append(warning)
     result_entries = [
         {
             "run": index,
@@ -242,6 +247,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         "completed": completed,
         "failed": len(results) - completed,
         "execution_success": completed == len(results),
+        "warnings": warnings,
     }
     (output_dir / "manifest.json").write_text(
         json.dumps(manifest, indent=2, sort_keys=True) + "\n",
@@ -253,6 +259,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         )
     )
     print("Read the answers and inspect produced artifacts. Execution success is not a grade.")
+    for warning in warnings:
+        print("warning: {}".format(warning), file=sys.stderr)
     return 0 if completed == len(results) else 1
 
 

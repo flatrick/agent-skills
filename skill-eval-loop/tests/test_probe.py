@@ -51,6 +51,32 @@ print(json.dumps({{"type": "agent_end", "isTerminal": True}}))
     return executable
 
 
+def write_fake_codex(directory: Path) -> Path:
+    behavior = """
+if "--version" in sys.argv:
+    print("codex-cli 0.155.1")
+    raise SystemExit(0)
+
+sys.stdin.read()
+print(json.dumps({"type": "item.completed", "item": {"type": "agent_message", "text": "OK"}}))
+print(json.dumps({"type": "turn.completed", "usage": {}}))
+"""
+    source = "import json\nimport sys\n\n" + textwrap.dedent(behavior).strip() + "\n"
+    if os.name == "nt":
+        implementation = directory / "codex_impl.py"
+        implementation.write_text(source, encoding="utf-8")
+        launcher = directory / "codex.cmd"
+        launcher.write_text(
+            '@echo off\r\n"{}" "{}" %*\r\n'.format(sys.executable, implementation),
+            encoding="utf-8",
+        )
+    else:
+        launcher = directory / "codex"
+        launcher.write_text("#!{}\n".format(sys.executable) + source, encoding="utf-8")
+        launcher.chmod(launcher.stat().st_mode | stat.S_IXUSR)
+    return launcher
+
+
 class ProbeCliTests(unittest.TestCase):
     def run_probe(self, cwd: Path, fake_bin: Path, out: Path, *extra: str):
         env = dict(os.environ)
@@ -145,6 +171,60 @@ class ProbeCliTests(unittest.TestCase):
             self.assertEqual(first["status"], "child_failed")
             self.assertEqual(first["exit_code"], 7)
             self.assertEqual((out / "run-001" / "stderr.txt").read_text(encoding="utf-8").strip(), "child failed")
+
+    def test_cli_reports_no_warnings_when_the_child_emits_none(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            fake_bin = root / "bin"
+            fake_bin.mkdir()
+            write_fake_omp(fake_bin)
+            out = root / "runs"
+
+            completed = self.run_probe(root, fake_bin, out)
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["warnings"], [])
+            self.assertNotIn("warning:", completed.stderr)
+
+    def test_cli_aggregates_and_reports_child_warnings(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            fake_bin = root / "bin"
+            fake_bin.mkdir()
+            write_fake_codex(fake_bin)
+            codex_home = root / "codex-home"
+            codex_home.mkdir()
+            (codex_home / "AGENTS.md").write_text("MDT for Codex CLI\n", encoding="utf-8")
+            out = root / "runs"
+
+            env = dict(os.environ)
+            env["PATH"] = str(fake_bin) + os.pathsep + env["PATH"]
+            env["CODEX_HOME"] = str(codex_home)
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "--task",
+                    "Reply with exactly OK.",
+                    "--runs",
+                    "2",
+                    "--out",
+                    str(out),
+                    "--harness",
+                    "codex",
+                ],
+                cwd=root,
+                env=env,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(len(manifest["warnings"]), 1)
+            self.assertIn("AGENTS.md", manifest["warnings"][0])
+            self.assertIn("warning: {}".format(manifest["warnings"][0]), completed.stderr)
 
     def test_missing_harness_driver_script_fails_cleanly(self):
         module = load_probe_module()
