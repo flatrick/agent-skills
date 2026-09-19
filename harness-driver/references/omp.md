@@ -1,9 +1,11 @@
 # OMP (Pi)
 
-Use OMP as a local, weaker model for instruction probes and bounded delegated tasks.
-Do not use it for work that needs a frontier model or a predictable cold-start time.
+Use OMP as a configurable child harness for instruction probes and bounded delegated tasks.
+Which model answers is operator configuration, not a property of OMP, and it changes without the version changing.
+Read `provider` and `model` out of each run rather than assuming either, and do not treat an OMP probe as a weak-reader test until you have checked what actually answered.
 
-Everything below, including the approval-mode table, was checked on 2026-09-14 against `omp v18.1.21`.
+The model identity and latency sections below were re-checked on 2026-09-19 against `omp/18.2.6`.
+Everything else on this page, including the flag table and the approval-mode table, was last checked on 2026-09-14 against `omp v18.1.21` and has not been re-exercised since.
 Re-verify after a version change.
 
 ## Proving-ground command
@@ -72,7 +74,8 @@ Treat a run as complete only when all of these conditions hold:
 4. A tool-free probe has no tool results.
 
 Read `provider` and `model` from the assistant message instead of asking the model to identify itself.
-On this machine, a successful 18.1.21 run reported provider `llama-cpp` and model `Qwen3.6-35B-A3B-IQ4-coder`.
+This machine has reported two different backends across versions: 18.1.21 reported provider `llama-cpp` with model `Qwen3.6-35B-A3B-IQ4-coder` on 2026-09-14, and 18.2.6 reported provider `openai-codex` with model `gpt-5.5` on 2026-09-19.
+The second is a frontier model, so an OMP probe is not automatically the weak-reader test the proving-ground workflow assumes.
 
 An exit code of zero without the terminal events is an invalid result, not an empty answer.
 Keep raw stdout and stderr when parsing fails.
@@ -116,8 +119,9 @@ Do not add them to the proving-ground runner without a measured need because eac
 
 ## Latency
 
-Cold start varies.
-A successful one-word response on this machine took about 13 seconds, while an earlier run remained in startup past 120 seconds.
+Latency follows the configured backend, so re-measure it whenever that backend changes.
+Under 18.1.21 with the local `llama-cpp` model, a successful one-word response took about 13 seconds, while an earlier run remained in startup past 120 seconds.
+Under 18.2.6 with `openai-codex`, five proving-ground runs through the runner completed in 4.0 to 5.9 seconds with no startup outlier.
 Use a timeout of several minutes for real probes and preserve partial output when it expires.
 
 ## Current support boundary

@@ -33,7 +33,7 @@ Reach for worker mode only when the work genuinely needs a separate engine.
 
 **Feed it the section, not the whole skill.**
 A weak model handed a long document will echo it back instead of acting on it.
-Measured on 2026-09-14: given one reference file plus a task, `omp` answered correctly; given that file concatenated with its parent `SKILL.md`, the same model regurgitated the input and never reached the task.
+Measured on 2026-09-14 against OMP's then-configured `Qwen3.6-35B-A3B-IQ4-coder`: given one reference file plus a task, `omp` answered correctly; given that file concatenated with its parent `SKILL.md`, the same model regurgitated the input and never reached the task.
 So test the excerpt a reader would actually be looking at when they make the decision.
 If the excerpt alone is not enough to get the answer right, that is the finding, and the fix is in the document, not the prompt.
 
