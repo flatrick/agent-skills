@@ -46,6 +46,8 @@ Resolve the script from the loaded skill's directory, not from the current worki
 The output directory must not exist.
 The script creates an empty child working directory under the output directory unless you pass a disposable directory through `--cwd`.
 On Codex, request host permission for this command when OMP needs to write its runtime state under `~/.omp`.
+Pass `--harness codex` to probe against the Codex child adapter instead of OMP; see `harness-driver/references/codex.md` for what that costs and how it is isolated.
+A Codex probe is not a clean room: `~/.codex/AGENTS.md` reaches it even under `--ignore-user-config`, and `probe.py` reports that as a warning in `manifest.json` and on stderr.
 
 ## The loop
 
