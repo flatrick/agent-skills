@@ -30,10 +30,24 @@ def load_harness_driver_module():
     return module
 
 
+def write_shim(directory: Path, name: str, source: str) -> Path:
+    if os.name == "nt":
+        implementation = directory / "{}_impl.py".format(name)
+        implementation.write_text(source, encoding="utf-8")
+        launcher = directory / "{}.cmd".format(name)
+        launcher.write_text(
+            '@echo off\r\n"{}" "{}" %*\r\n'.format(sys.executable, implementation),
+            encoding="utf-8",
+        )
+    else:
+        launcher = directory / name
+        launcher.write_text("#!{}\n".format(sys.executable) + source, encoding="utf-8")
+        launcher.chmod(launcher.stat().st_mode | stat.S_IXUSR)
+    return launcher
+
+
 def write_fake_omp(directory: Path, exit_code: int = 0) -> Path:
-    executable = directory / "omp"
-    source = f"""#!/usr/bin/env python3
-import json
+    source = f"""import json
 import sys
 
 if "--version" in sys.argv:
@@ -54,9 +68,7 @@ message = {{
 print(json.dumps({{"type": "turn_end", "message": message, "toolResults": []}}))
 print(json.dumps({{"type": "agent_end", "isTerminal": True}}))
 """
-    executable.write_text(source, encoding="utf-8")
-    executable.chmod(executable.stat().st_mode | stat.S_IXUSR)
-    return executable
+    return write_shim(directory, "omp", source)
 
 
 def write_fake_codex(directory: Path) -> Path:
@@ -70,19 +82,7 @@ print(json.dumps({"type": "item.completed", "item": {"type": "agent_message", "t
 print(json.dumps({"type": "turn.completed", "usage": {}}))
 """
     source = "import json\nimport sys\n\n" + textwrap.dedent(behavior).strip() + "\n"
-    if os.name == "nt":
-        implementation = directory / "codex_impl.py"
-        implementation.write_text(source, encoding="utf-8")
-        launcher = directory / "codex.cmd"
-        launcher.write_text(
-            '@echo off\r\n"{}" "{}" %*\r\n'.format(sys.executable, implementation),
-            encoding="utf-8",
-        )
-    else:
-        launcher = directory / "codex"
-        launcher.write_text("#!{}\n".format(sys.executable) + source, encoding="utf-8")
-        launcher.chmod(launcher.stat().st_mode | stat.S_IXUSR)
-    return launcher
+    return write_shim(directory, "codex", source)
 
 
 class ProbeCliTests(unittest.TestCase):
