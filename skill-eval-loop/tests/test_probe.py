@@ -22,6 +22,14 @@ def load_probe_module():
     return module
 
 
+def load_harness_driver_module():
+    script = Path(__file__).resolve().parents[2] / "harness-driver" / "scripts" / "harness_driver.py"
+    spec = importlib.util.spec_from_file_location("harness_driver_under_test", script)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def write_fake_omp(directory: Path, exit_code: int = 0) -> Path:
     executable = directory / "omp"
     source = f"""#!/usr/bin/env python3
@@ -225,6 +233,12 @@ class ProbeCliTests(unittest.TestCase):
             self.assertEqual(len(manifest["warnings"]), 1)
             self.assertIn("AGENTS.md", manifest["warnings"][0])
             self.assertIn("warning: {}".format(manifest["warnings"][0]), completed.stderr)
+
+    def test_harness_choices_match_the_harness_driver_adapter_registry(self):
+        probe = load_probe_module()
+        harness_driver = load_harness_driver_module()
+
+        self.assertEqual(probe.HARNESS_CHOICES, tuple(sorted(harness_driver.ADAPTERS)))
 
     def test_missing_harness_driver_script_fails_cleanly(self):
         module = load_probe_module()

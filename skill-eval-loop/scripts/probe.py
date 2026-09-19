@@ -17,6 +17,8 @@ HARNESS_DRIVER_SCRIPT = (
 
 SCHEMA_VERSION = 1
 
+HARNESS_CHOICES = ("codex", "omp")
+
 
 class HarnessDriverInvocationError(RuntimeError):
     """harness_driver.py itself could not be run to completion."""
@@ -45,7 +47,7 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     task.add_argument("--task-file", help="File containing the task text.")
     parser.add_argument("--runs", type=int, default=3)
     parser.add_argument("--out", required=True, help="New directory for this pass.")
-    parser.add_argument("--harness", default="omp", choices=["codex", "omp"])
+    parser.add_argument("--harness", default="omp", choices=list(HARNESS_CHOICES))
     parser.add_argument("--model")
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument(
