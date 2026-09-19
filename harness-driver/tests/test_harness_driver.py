@@ -1,4 +1,6 @@
+import contextlib
 import importlib.util
+import io
 import json
 import os
 import stat
@@ -90,6 +92,56 @@ def reap(pidfile: Path) -> None:
             stdin=subprocess.DEVNULL,
             capture_output=True,
         )
+
+
+CODEX_SHIM_PREFIX = """
+if "--version" in sys.argv:
+    print("codex-cli 0.155.1")
+    raise SystemExit(0)
+RECORD = HERE / "codex-record"
+(RECORD / "argv.json").write_text(json.dumps(sys.argv[1:]), encoding="utf-8")
+(RECORD / "stdin.bin").write_bytes(sys.stdin.buffer.read())
+"""
+
+
+CODEX_COMPLETED_TURN = """
+print(json.dumps({"type": "thread.started", "thread_id": "t1"}))
+print(json.dumps({"type": "item.completed", "item": {
+    "id": "item_0", "type": "error",
+    "message": "Code Mode is unavailable because code-mode host is disabled."}}))
+print(json.dumps({"type": "turn.started"}))
+print(json.dumps({"type": "item.completed", "item": {
+    "id": "item_1", "type": "reasoning", "text": "weighing the options"}}))
+print(json.dumps({"type": "item.completed", "item": {
+    "id": "item_2", "type": "agent_message", "text": "I'll answer that now."}}))
+print(json.dumps({"type": "item.completed", "item": {
+    "id": "item_3", "type": "agent_message", "text": "OK"}}))
+print(json.dumps({"type": "turn.completed", "usage": {"input_tokens": 8451}}))
+"""
+
+
+def write_fake_codex(directory: Path, behavior: str) -> Path:
+    record = directory / "codex-record"
+    record.mkdir(exist_ok=True)
+    write_shim(
+        directory,
+        "codex",
+        CODEX_SHIM_PREFIX.strip() + "\n" + textwrap.dedent(behavior).strip(),
+    )
+    return record
+
+
+def adjacent_pairs(command):
+    return list(zip(command, command[1:]))
+
+
+def codex_env(root: Path) -> dict:
+    home = root / "codex-home"
+    home.mkdir(exist_ok=True)
+    return {
+        "PATH": str(root) + os.pathsep + os.environ["PATH"],
+        "CODEX_HOME": str(home),
+    }
 
 
 def run_with_deadline(call, seconds: float):
@@ -254,6 +306,254 @@ class HarnessDriverTests(unittest.TestCase):
         self.assertEqual(result.harness_version, "omp/18.1.21")
         self.assertEqual(result.assistant.text, "OK")
         self.assertEqual(result.assistant.provider, "llama-cpp")
+
+
+class CodexCommandTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.module = load_module()
+
+    def build(self, **overrides):
+        values = {
+            "harness": "codex",
+            "prompt": "Reply with exactly OK.",
+            "timeout_seconds": 30,
+            "child_cwd": Path(tempfile.gettempdir()),
+            "model": None,
+        }
+        values.update(overrides)
+        return self.module.build_codex_command(
+            self.module.HarnessRequest(**values), "/usr/bin/codex"
+        )
+
+    def test_codex_runs_the_model_in_a_read_only_sandbox(self):
+        self.assertIn(("-s", "read-only"), adjacent_pairs(self.build()))
+
+    def test_codex_keeps_no_session_state_between_runs(self):
+        self.assertIn("--ephemeral", self.build())
+
+    def test_codex_ignores_operator_config_that_would_skew_the_probe(self):
+        self.assertIn("--ignore-user-config", self.build())
+
+    def test_codex_disables_every_tool_surface_the_ablation_measured(self):
+        measured = (
+            ("-c", "project_doc_max_bytes=0"),
+            ("-c", "skills.bundled.enabled=false"),
+            ("-c", "web_search=disabled"),
+            ("--disable", "apps"),
+            ("--disable", "shell_tool"),
+            ("--disable", "view_image"),
+            ("--disable", "image_generation"),
+            ("--disable", "sleep_tool"),
+            ("--disable", "code_mode_host"),
+        )
+        pairs = adjacent_pairs(self.build())
+
+        self.assertEqual(self.module.CODEX_ISOLATION_FLAGS, measured)
+        for flag in measured:
+            with self.subTest(flag=flag):
+                self.assertIn(flag, pairs)
+
+    def test_codex_takes_the_prompt_on_stdin_not_the_command_line(self):
+        prompt = "first line\nsecond line with \"quotes\" and %TEMP%"
+
+        command = self.build(prompt=prompt)
+
+        self.assertEqual(command[-1], "-")
+        self.assertNotIn(prompt, command)
+        self.assertNotIn("first line", command)
+
+    def test_codex_pins_the_model_only_when_one_is_requested(self):
+        self.assertNotIn("-m", self.build())
+        self.assertIn(("-m", "gpt-6-astra"), adjacent_pairs(self.build(model="gpt-6-astra")))
+
+
+class CodexParserTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.module = load_module()
+
+    def test_parse_codex_jsonl_rejects_malformed_json_and_ignores_plain_noise(self):
+        with self.assertRaisesRegex(ValueError, "malformed JSON"):
+            self.module.parse_codex_jsonl('{"type":"turn.completed"')
+
+        stream = "\n".join(
+            [
+                "loading codex",
+                json.dumps(
+                    {
+                        "type": "item.completed",
+                        "item": {"type": "agent_message", "text": "OK"},
+                    }
+                ),
+                json.dumps({"type": "turn.completed", "usage": {}}),
+            ]
+        )
+
+        self.assertEqual(self.module.parse_codex_jsonl(stream).text, "OK")
+
+    def test_parse_codex_jsonl_requires_a_completed_turn(self):
+        stream = json.dumps(
+            {"type": "item.completed", "item": {"type": "agent_message", "text": "OK"}}
+        )
+
+        with self.assertRaisesRegex(ValueError, "turn.completed"):
+            self.module.parse_codex_jsonl(stream)
+
+    def test_parse_codex_jsonl_surfaces_a_top_level_error_event(self):
+        stream = "\n".join(
+            [
+                json.dumps({"type": "turn.started"}),
+                json.dumps({"type": "error", "message": "model not supported"}),
+            ]
+        )
+
+        with self.assertRaisesRegex(ValueError, "model not supported"):
+            self.module.parse_codex_jsonl(stream)
+
+
+class CodexRunTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.module = load_module()
+
+    def request(self, cwd: Path, **overrides):
+        values = {
+            "harness": "codex",
+            "prompt": "Reply with exactly OK.",
+            "timeout_seconds": 30,
+            "child_cwd": cwd,
+            "model": None,
+        }
+        values.update(overrides)
+        return self.module.HarnessRequest(**values)
+
+    def run_fake(self, behavior: str, **overrides):
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as raw:
+            root = Path(raw)
+            record = write_fake_codex(root, behavior)
+            with mock.patch.dict(os.environ, codex_env(root)):
+                result = self.module.run_harness(self.request(root, **overrides))
+            argv = record / "argv.json"
+            recorded = json.loads(argv.read_text(encoding="utf-8")) if argv.exists() else None
+            stdin_file = record / "stdin.bin"
+            stdin_bytes = stdin_file.read_bytes() if stdin_file.exists() else None
+        return result, recorded, stdin_bytes
+
+    def test_codex_run_takes_the_last_agent_message_and_reports_no_model_identity(self):
+        result, _, _ = self.run_fake(CODEX_COMPLETED_TURN)
+
+        self.assertEqual(result.status, self.module.RunStatus.COMPLETED)
+        self.assertEqual(result.harness, "codex")
+        self.assertEqual(result.harness_version, "codex-cli 0.155.1")
+        self.assertEqual(result.assistant.text, "OK")
+        self.assertIsNone(result.assistant.provider)
+        self.assertIsNone(result.assistant.model)
+        self.assertIsNone(result.assistant.stop_reason)
+
+    def test_codex_run_delivers_the_prompt_to_stdin_byte_for_byte(self):
+        prompt = (
+            "Line one has \"double\" and 'single' quotes.\n"
+            "Line two names %TEMP% literally.\n"
+            "Line three has ’, € and 中.\n"
+            + "padding ’中\n" * 900
+            + "final line"
+        )
+        self.assertGreater(len(prompt.encode("utf-8")), 10240)
+
+        result, argv, stdin_bytes = self.run_fake(CODEX_COMPLETED_TURN, prompt=prompt)
+
+        self.assertEqual(result.status, self.module.RunStatus.COMPLETED)
+        self.assertEqual(stdin_bytes, prompt.encode("utf-8"))
+        self.assertNotIn(prompt, argv)
+
+    def test_codex_run_reports_the_child_exit_code(self):
+        result, _, _ = self.run_fake(
+            "print('refused', file=sys.stderr)\nraise SystemExit(3)"
+        )
+
+        self.assertEqual(result.status, self.module.RunStatus.CHILD_FAILED)
+        self.assertEqual(result.exit_code, 3)
+        self.assertEqual(result.stderr.strip(), "refused")
+
+    def test_codex_run_rejects_a_turn_that_used_tools(self):
+        for item_type in ("command_execution", "file_change"):
+            with self.subTest(item_type=item_type):
+                behavior = (
+                    "print(json.dumps({'type': 'turn.started'}))\n"
+                    "print(json.dumps({'type': 'item.started', 'item': "
+                    "{'id': 'i1', 'type': '" + item_type + "'}}))\n"
+                    "print(json.dumps({'type': 'turn.completed', 'usage': {}}))"
+                )
+
+                result, _, _ = self.run_fake(behavior)
+
+                self.assertEqual(result.status, self.module.RunStatus.INVALID_OUTPUT)
+                self.assertIn("tool-free probe", result.error)
+                self.assertIn(item_type, result.error)
+
+    def test_codex_run_surfaces_a_failed_turn(self):
+        behavior = (
+            "print(json.dumps({'type': 'turn.started'}))\n"
+            "print(json.dumps({'type': 'turn.failed', 'error': "
+            "{'message': 'the model is not supported with a ChatGPT account'}}))"
+        )
+
+        result, _, _ = self.run_fake(behavior)
+
+        self.assertEqual(result.status, self.module.RunStatus.INVALID_OUTPUT)
+        self.assertIn("not supported with a ChatGPT account", result.error)
+
+    def test_codex_run_reports_a_stream_without_a_completed_turn_as_invalid(self):
+        behavior = "print(json.dumps({'type': 'thread.started', 'thread_id': 't1'}))"
+
+        result, _, _ = self.run_fake(behavior)
+
+        self.assertEqual(result.status, self.module.RunStatus.INVALID_OUTPUT)
+        self.assertIn("turn.completed", result.error)
+
+    def test_codex_run_times_out_and_returns_promptly(self):
+        blocked, box = run_with_deadline(
+            lambda: self.run_fake("time.sleep(120)", timeout_seconds=1), 45
+        )
+
+        self.assertFalse(blocked, "run_harness never returned after the timeout")
+        self.assertIsNone(box.get("error"))
+        result, _, _ = box["result"]
+        self.assertEqual(result.status, self.module.RunStatus.TIMED_OUT)
+
+    def test_codex_run_warns_that_codex_home_agents_md_reaches_the_probe(self):
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as raw:
+            root = Path(raw)
+            write_fake_codex(root, CODEX_COMPLETED_TURN)
+            environment = codex_env(root)
+            agents_md = Path(environment["CODEX_HOME"]) / "AGENTS.md"
+            agents_md.write_text("MDT for Codex CLI\n", encoding="utf-8")
+            out = root / "run"
+            stderr = io.StringIO()
+            argv = [
+                "--harness", "codex",
+                "--prompt", "Reply with exactly OK.",
+                "--cwd", str(root),
+                "--timeout", "30",
+                "--out", str(out),
+            ]
+            with mock.patch.dict(os.environ, environment):
+                with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                    code = self.module.main(argv)
+            record = json.loads((out / "result.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(code, 0)
+        self.assertEqual(len(record["warnings"]), 1)
+        self.assertIn("AGENTS.md", record["warnings"][0])
+        self.assertIn("--ignore-user-config", record["warnings"][0])
+        self.assertIn(record["warnings"][0], stderr.getvalue())
+
+    def test_codex_run_reports_no_warning_when_codex_home_has_no_agents_md(self):
+        result, _, _ = self.run_fake(CODEX_COMPLETED_TURN)
+
+        self.assertEqual(result.status, self.module.RunStatus.COMPLETED)
+        self.assertEqual(result.warnings, ())
 
 
 class ProcessTreeTests(unittest.TestCase):

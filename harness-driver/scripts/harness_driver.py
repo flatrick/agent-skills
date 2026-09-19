@@ -142,6 +142,96 @@ def parse_omp_jsonl(output: str) -> AssistantReply:
     )
 
 
+CODEX_ISOLATION_FLAGS = (
+    ("-c", "project_doc_max_bytes=0"),
+    ("-c", "skills.bundled.enabled=false"),
+    ("-c", "web_search=disabled"),
+    ("--disable", "apps"),
+    ("--disable", "shell_tool"),
+    ("--disable", "view_image"),
+    ("--disable", "image_generation"),
+    ("--disable", "sleep_tool"),
+    ("--disable", "code_mode_host"),
+)
+
+CODEX_PROBE_ITEM_TYPES = frozenset({"agent_message", "reasoning", "error"})
+
+
+def build_codex_command(request: HarnessRequest, executable: str) -> List[str]:
+    command = [
+        executable,
+        "exec",
+        "--json",
+        "--ephemeral",
+        "--ignore-user-config",
+        "--ignore-rules",
+        "--skip-git-repo-check",
+        "-s",
+        "read-only",
+        "-C",
+        str(request.child_cwd.resolve()),
+    ]
+    for flag, value in CODEX_ISOLATION_FLAGS:
+        command.extend([flag, value])
+    if request.model:
+        command.extend(["-m", request.model])
+    command.append("-")
+    return command
+
+
+def parse_codex_jsonl(output: str) -> AssistantReply:
+    events = []
+    for line in output.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        try:
+            event = json.loads(stripped)
+        except ValueError as error:
+            if stripped.startswith("{") or stripped.startswith("["):
+                raise ValueError("Codex emitted malformed JSON: {}".format(error))
+            continue
+        if isinstance(event, dict):
+            events.append(event)
+
+    answer = None
+    for event in events:
+        kind = event.get("type")
+        if kind == "turn.failed":
+            failure = event.get("error")
+            message = failure.get("message") if isinstance(failure, dict) else None
+            raise ValueError("Codex turn failed: {}".format(message))
+        if kind == "error":
+            raise ValueError("Codex reported an error: {}".format(event.get("message")))
+        if kind == "turn.completed":
+            if answer is None:
+                raise ValueError("Codex turn has no agent_message text")
+            return AssistantReply(text=answer, provider=None, model=None, stop_reason=None)
+        item = event.get("item")
+        if not isinstance(item, dict):
+            continue
+        item_type = item.get("type")
+        if item_type not in CODEX_PROBE_ITEM_TYPES:
+            raise ValueError("Codex used tools during a tool-free probe: {}".format(item_type))
+        if item_type == "agent_message":
+            text = item.get("text")
+            if isinstance(text, str) and text:
+                answer = text
+    raise ValueError("Codex output has no turn.completed event")
+
+
+def codex_ambient_warnings() -> List[str]:
+    configured = os.environ.get("CODEX_HOME")
+    codex_home = Path(configured) if configured else Path.home() / ".codex"
+    agents_md = codex_home / "AGENTS.md"
+    if not agents_md.is_file():
+        return []
+    return [
+        "codex loads {} even under --ignore-user-config, "
+        "so its text reaches the probe".format(agents_md)
+    ]
+
+
 def _no_ambient_warnings() -> List[str]:
     return []
 
@@ -154,6 +244,14 @@ ADAPTERS = {
         build_command=build_omp_command,
         parse_output=parse_omp_jsonl,
         ambient_warnings=_no_ambient_warnings,
+    ),
+    "codex": HarnessAdapter(
+        name="codex",
+        binary="codex",
+        prompt_via_stdin=True,
+        build_command=build_codex_command,
+        parse_output=parse_codex_jsonl,
+        ambient_warnings=codex_ambient_warnings,
     ),
 }
 
