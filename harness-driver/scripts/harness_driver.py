@@ -65,6 +65,7 @@ class HarnessAdapter:
     build_command: Callable[[HarnessRequest, str], List[str]]
     parse_output: Callable[[str], AssistantReply]
     ambient_warnings: Callable[[], List[str]]
+    failure_reason: Callable[[str], Optional[str]]
 
 
 def build_omp_command(request: HarnessRequest, executable: str) -> List[str]:
@@ -220,6 +221,37 @@ def parse_codex_jsonl(output: str) -> AssistantReply:
     raise ValueError("Codex output has no turn.completed event")
 
 
+def codex_failure_reason(output: str) -> Optional[str]:
+    events = []
+    for line in output.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        try:
+            event = json.loads(stripped)
+        except ValueError:
+            continue
+        if isinstance(event, dict):
+            events.append(event)
+
+    for event in events:
+        if event.get("type") == "turn.failed":
+            failure = event.get("error")
+            message = failure.get("message") if isinstance(failure, dict) else None
+            if isinstance(message, str) and message:
+                return message
+    for event in events:
+        if event.get("type") == "error":
+            message = event.get("message")
+            if isinstance(message, str) and message:
+                return message
+    return None
+
+
+def _no_failure_reason(output: str) -> Optional[str]:
+    return None
+
+
 def codex_ambient_warnings() -> List[str]:
     configured = os.environ.get("CODEX_HOME")
     codex_home = Path(configured) if configured else Path.home() / ".codex"
@@ -244,6 +276,7 @@ ADAPTERS = {
         build_command=build_omp_command,
         parse_output=parse_omp_jsonl,
         ambient_warnings=_no_ambient_warnings,
+        failure_reason=_no_failure_reason,
     ),
     "codex": HarnessAdapter(
         name="codex",
@@ -252,6 +285,7 @@ ADAPTERS = {
         build_command=build_codex_command,
         parse_output=parse_codex_jsonl,
         ambient_warnings=codex_ambient_warnings,
+        failure_reason=codex_failure_reason,
     ),
 }
 
@@ -401,6 +435,10 @@ def run_harness(request: HarnessRequest) -> HarnessResult:
 
     duration_ms = int((time.monotonic() - started) * 1000)
     if process.returncode != 0:
+        error = "{} exited with code {}".format(adapter.name, process.returncode)
+        reason = adapter.failure_reason(stdout)
+        if reason:
+            error = "{}: {}".format(error, reason)
         return HarnessResult(
             harness=adapter.name,
             harness_version=version,
@@ -411,7 +449,7 @@ def run_harness(request: HarnessRequest) -> HarnessResult:
             assistant=None,
             stdout=stdout,
             stderr=stderr,
-            error="{} exited with code {}".format(adapter.name, process.returncode),
+            error=error,
             warnings=warnings,
         )
     try:

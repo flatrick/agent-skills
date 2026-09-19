@@ -476,6 +476,20 @@ class CodexRunTests(unittest.TestCase):
         self.assertEqual(result.exit_code, 3)
         self.assertEqual(result.stderr.strip(), "refused")
 
+    def test_codex_run_surfaces_a_failed_turn_that_exits_nonzero(self):
+        behavior = (
+            "print(json.dumps({'type': 'turn.started'}))\n"
+            "print(json.dumps({'type': 'turn.failed', 'error': "
+            "{'message': 'the model is not supported with a ChatGPT account'}}))\n"
+            "raise SystemExit(1)"
+        )
+
+        result, _, _ = self.run_fake(behavior)
+
+        self.assertEqual(result.status, self.module.RunStatus.CHILD_FAILED)
+        self.assertEqual(result.exit_code, 1)
+        self.assertIn("not supported with a ChatGPT account", result.error)
+
     def test_codex_run_rejects_a_turn_that_used_tools(self):
         for item_type in ("command_execution", "file_change"):
             with self.subTest(item_type=item_type):
