@@ -2,8 +2,11 @@ import importlib.util
 import json
 import os
 import stat
+import subprocess
+import sys
 import tempfile
 import textwrap
+import threading
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -34,6 +37,74 @@ if "--version" in sys.argv:
     executable.write_text(source, encoding="utf-8")
     executable.chmod(executable.stat().st_mode | stat.S_IXUSR)
     return executable
+
+
+SHIM_PREAMBLE = """import json
+import os
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+
+"""
+
+
+def write_shim(directory: Path, name: str, behavior: str) -> Path:
+    source = SHIM_PREAMBLE + textwrap.dedent(behavior).strip() + "\n"
+    if os.name == "nt":
+        implementation = directory / "{}_impl.py".format(name)
+        implementation.write_text(source, encoding="utf-8")
+        launcher = directory / "{}.cmd".format(name)
+        launcher.write_text(
+            '@echo off\r\n"{}" "{}" %*\r\n'.format(sys.executable, implementation),
+            encoding="utf-8",
+        )
+    else:
+        launcher = directory / name
+        launcher.write_text("#!{}\n".format(sys.executable) + source, encoding="utf-8")
+        launcher.chmod(launcher.stat().st_mode | stat.S_IXUSR)
+    return launcher
+
+
+def write_sleeping_grandchild(directory: Path) -> Path:
+    (directory / "sleeper.py").write_text(
+        "import os\n"
+        "import sys\n"
+        "import time\n"
+        "with open(sys.argv[1], 'a', encoding='utf-8') as handle:\n"
+        "    print(os.getpid(), file=handle)\n"
+        "time.sleep(120)\n",
+        encoding="utf-8",
+    )
+    return directory / "descendant-pids.txt"
+
+
+def reap(pidfile: Path) -> None:
+    if not pidfile.exists():
+        return
+    for pid in pidfile.read_text(encoding="utf-8").split():
+        subprocess.run(
+            ["taskkill", "/PID", pid, "/T", "/F"],
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+        )
+
+
+def run_with_deadline(call, seconds: float):
+    box = {}
+
+    def target():
+        try:
+            box["result"] = call()
+        except BaseException as error:
+            box["error"] = error
+
+    worker = threading.Thread(target=target, daemon=True)
+    worker.start()
+    worker.join(seconds)
+    return worker.is_alive(), box
 
 
 class HarnessDriverTests(unittest.TestCase):
@@ -183,6 +254,49 @@ class HarnessDriverTests(unittest.TestCase):
         self.assertEqual(result.harness_version, "omp/18.1.21")
         self.assertEqual(result.assistant.text, "OK")
         self.assertEqual(result.assistant.provider, "llama-cpp")
+
+
+class ProcessTreeTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.module = load_module()
+
+    @unittest.skipUnless(os.name == "nt", "process-tree teardown is the Windows path")
+    def test_timeout_returns_when_a_grandchild_still_holds_the_pipes(self):
+        behavior = """
+        if "--version" in sys.argv:
+            print("omp/18.1.21")
+            raise SystemExit(0)
+        pidfile = HERE / "descendant-pids.txt"
+        with open(pidfile, "a", encoding="utf-8") as handle:
+            print(os.getpid(), file=handle)
+        subprocess.Popen([sys.executable, str(HERE / "sleeper.py"), str(pidfile)])
+        time.sleep(120)
+        """
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as raw:
+            root = Path(raw)
+            pidfile = write_sleeping_grandchild(root)
+            write_shim(root, "omp", behavior)
+            request = self.module.HarnessRequest(
+                harness="omp",
+                prompt="Reply with exactly OK.",
+                timeout_seconds=1,
+                child_cwd=root,
+                model=None,
+            )
+
+            def call():
+                with mock.patch.dict(
+                    os.environ, {"PATH": str(root) + os.pathsep + os.environ["PATH"]}
+                ):
+                    return self.module.run_harness(request)
+
+            blocked, box = run_with_deadline(call, 45)
+            reap(pidfile)
+
+        self.assertFalse(blocked, "run_harness never returned after the timeout")
+        self.assertIsNone(box.get("error"))
+        self.assertEqual(box["result"].status, self.module.RunStatus.TIMED_OUT)
 
 
 if __name__ == "__main__":

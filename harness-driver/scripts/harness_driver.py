@@ -11,7 +11,7 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import Callable, List, Optional, Sequence, Tuple
 
 
 SCHEMA_VERSION = 1
@@ -54,6 +54,17 @@ class HarnessResult:
     stdout: str
     stderr: str
     error: Optional[str]
+    warnings: Tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class HarnessAdapter:
+    name: str
+    binary: str
+    prompt_via_stdin: bool
+    build_command: Callable[[HarnessRequest, str], List[str]]
+    parse_output: Callable[[str], AssistantReply]
+    ambient_warnings: Callable[[], List[str]]
 
 
 def build_omp_command(request: HarnessRequest, executable: str) -> List[str]:
@@ -131,13 +142,30 @@ def parse_omp_jsonl(output: str) -> AssistantReply:
     )
 
 
+def _no_ambient_warnings() -> List[str]:
+    return []
+
+
+ADAPTERS = {
+    "omp": HarnessAdapter(
+        name="omp",
+        binary="omp",
+        prompt_via_stdin=False,
+        build_command=build_omp_command,
+        parse_output=parse_omp_jsonl,
+        ambient_warnings=_no_ambient_warnings,
+    ),
+}
+
+
 def _read_version(executable: str) -> Optional[str]:
     try:
         completed = subprocess.run(
             [executable, "--version"],
             stdin=subprocess.DEVNULL,
             capture_output=True,
-            text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=10,
         )
     except (OSError, subprocess.TimeoutExpired):
@@ -148,18 +176,33 @@ def _read_version(executable: str) -> Optional[str]:
     return version or None
 
 
+def _kill_tree(process: subprocess.Popen) -> None:
+    # Killing only the launched process leaves grandchildren holding the inherited
+    # stdout and stderr pipes, so the post-kill communicate() never returns.
+    try:
+        subprocess.run(
+            ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    process.kill()
+
+
 def _stop_process(process: subprocess.Popen) -> None:
     if os.name == "posix":
         os.killpg(process.pid, signal.SIGTERM)
     else:
-        process.terminate()
+        _kill_tree(process)
 
 
 def _kill_process(process: subprocess.Popen) -> None:
     if os.name == "posix":
         os.killpg(process.pid, signal.SIGKILL)
     else:
-        process.kill()
+        _kill_tree(process)
 
 
 def _text(value) -> str:
@@ -172,18 +215,20 @@ def _text(value) -> str:
 
 def run_harness(request: HarnessRequest) -> HarnessResult:
     started = time.monotonic()
-    if request.harness != "omp":
+    adapter = ADAPTERS.get(request.harness)
+    if adapter is None:
         raise ValueError("unsupported harness: {}".format(request.harness))
     if request.timeout_seconds <= 0:
         raise ValueError("timeout_seconds must be positive")
     child_cwd = request.child_cwd.resolve()
     if not child_cwd.is_dir():
         raise ValueError("child_cwd is not a directory: {}".format(child_cwd))
+    warnings = tuple(adapter.ambient_warnings())
 
-    executable = shutil.which("omp")
+    executable = shutil.which(adapter.binary)
     if executable is None:
         return HarnessResult(
-            harness="omp",
+            harness=adapter.name,
             harness_version=None,
             executable=None,
             status=RunStatus.LAUNCH_FAILED,
@@ -192,24 +237,26 @@ def run_harness(request: HarnessRequest) -> HarnessResult:
             assistant=None,
             stdout="",
             stderr="",
-            error="omp executable not found on PATH",
+            error="{} executable not found on PATH".format(adapter.binary),
+            warnings=warnings,
         )
 
     version = _read_version(executable)
-    command = build_omp_command(request, executable)
+    command = adapter.build_command(request, executable)
     try:
         process = subprocess.Popen(
             command,
             cwd=str(child_cwd),
-            stdin=subprocess.DEVNULL,
+            stdin=subprocess.PIPE if adapter.prompt_via_stdin else subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True,
+            encoding="utf-8",
+            errors="replace",
             start_new_session=(os.name == "posix"),
         )
     except OSError as error:
         return HarnessResult(
-            harness="omp",
+            harness=adapter.name,
             harness_version=version,
             executable=executable,
             status=RunStatus.LAUNCH_FAILED,
@@ -219,10 +266,18 @@ def run_harness(request: HarnessRequest) -> HarnessResult:
             stdout="",
             stderr="",
             error=str(error),
+            warnings=warnings,
         )
 
+    stdin_payload = None
+    if adapter.prompt_via_stdin:
+        # Text-mode stdin rewrites "\n" as os.linesep, which would reshape the prompt.
+        process.stdin.reconfigure(newline="")
+        stdin_payload = request.prompt
     try:
-        stdout, stderr = process.communicate(timeout=request.timeout_seconds)
+        stdout, stderr = process.communicate(
+            input=stdin_payload, timeout=request.timeout_seconds
+        )
     except subprocess.TimeoutExpired as timeout_error:
         _stop_process(process)
         try:
@@ -233,7 +288,7 @@ def run_harness(request: HarnessRequest) -> HarnessResult:
         stdout = _text(stdout) or _text(timeout_error.stdout)
         stderr = _text(stderr) or _text(timeout_error.stderr)
         return HarnessResult(
-            harness="omp",
+            harness=adapter.name,
             harness_version=version,
             executable=executable,
             status=RunStatus.TIMED_OUT,
@@ -243,12 +298,13 @@ def run_harness(request: HarnessRequest) -> HarnessResult:
             stdout=stdout,
             stderr=stderr,
             error="timed out after {}s".format(request.timeout_seconds),
+            warnings=warnings,
         )
 
     duration_ms = int((time.monotonic() - started) * 1000)
     if process.returncode != 0:
         return HarnessResult(
-            harness="omp",
+            harness=adapter.name,
             harness_version=version,
             executable=executable,
             status=RunStatus.CHILD_FAILED,
@@ -257,13 +313,14 @@ def run_harness(request: HarnessRequest) -> HarnessResult:
             assistant=None,
             stdout=stdout,
             stderr=stderr,
-            error="OMP exited with code {}".format(process.returncode),
+            error="{} exited with code {}".format(adapter.name, process.returncode),
+            warnings=warnings,
         )
     try:
-        assistant = parse_omp_jsonl(stdout)
+        assistant = adapter.parse_output(stdout)
     except ValueError as error:
         return HarnessResult(
-            harness="omp",
+            harness=adapter.name,
             harness_version=version,
             executable=executable,
             status=RunStatus.INVALID_OUTPUT,
@@ -273,9 +330,10 @@ def run_harness(request: HarnessRequest) -> HarnessResult:
             stdout=stdout,
             stderr=stderr,
             error=str(error),
+            warnings=warnings,
         )
     return HarnessResult(
-        harness="omp",
+        harness=adapter.name,
         harness_version=version,
         executable=executable,
         status=RunStatus.COMPLETED,
@@ -285,6 +343,7 @@ def run_harness(request: HarnessRequest) -> HarnessResult:
         stdout=stdout,
         stderr=stderr,
         error=None,
+        warnings=warnings,
     )
 
 
@@ -310,6 +369,7 @@ def result_record(result: HarnessResult) -> dict:
         "stderr_file": "stderr.txt",
         "answer_file": "answer.txt" if result.assistant is not None else None,
         "error": result.error,
+        "warnings": list(result.warnings),
     }
 
 
@@ -327,7 +387,7 @@ def write_result(directory: Path, result: HarnessResult) -> None:
 
 def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--harness", default="omp", choices=["omp"])
+    parser.add_argument("--harness", default="omp", choices=sorted(ADAPTERS))
     prompt = parser.add_mutually_exclusive_group(required=True)
     prompt.add_argument("--prompt")
     prompt.add_argument("--prompt-file")
@@ -373,6 +433,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     except FileExistsError:
         print("output directory already exists: {}".format(output_dir), file=os.sys.stderr)
         return 2
+    for warning in result.warnings:
+        print("warning: {}".format(warning), file=os.sys.stderr)
     print("{}: {}".format(result.status.value, output_dir))
     return 0 if result.status is RunStatus.COMPLETED else 1
 
