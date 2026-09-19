@@ -24,23 +24,6 @@ def load_module():
     return module
 
 
-def write_fake_omp(directory: Path, behavior: str) -> Path:
-    executable = directory / "omp"
-    source = """#!/usr/bin/env python3
-import json
-import sys
-import time
-
-if "--version" in sys.argv:
-    print("omp/18.1.21")
-    raise SystemExit(0)
-
-""" + textwrap.dedent(behavior).strip() + "\n"
-    executable.write_text(source, encoding="utf-8")
-    executable.chmod(executable.stat().st_mode | stat.S_IXUSR)
-    return executable
-
-
 SHIM_PREAMBLE = """import json
 import os
 import subprocess
@@ -68,6 +51,21 @@ def write_shim(directory: Path, name: str, behavior: str) -> Path:
         launcher.write_text("#!{}\n".format(sys.executable) + source, encoding="utf-8")
         launcher.chmod(launcher.stat().st_mode | stat.S_IXUSR)
     return launcher
+
+
+OMP_SHIM_PREFIX = """
+if "--version" in sys.argv:
+    print("omp/18.1.21")
+    raise SystemExit(0)
+"""
+
+
+def write_fake_omp(directory: Path, behavior: str) -> Path:
+    return write_shim(
+        directory,
+        "omp",
+        OMP_SHIM_PREFIX.strip() + "\n" + textwrap.dedent(behavior).strip(),
+    )
 
 
 def write_sleeping_grandchild(directory: Path) -> Path:
@@ -193,7 +191,8 @@ class HarnessDriverTests(unittest.TestCase):
         ):
             self.assertEqual(command.count(flag), 1)
         self.assertEqual(command[-2:], ["--model=local/model", "Reply with exactly OK."])
-        self.assertIn("--cwd=/tmp/probe-cwd", command)
+        expected_cwd = Path("/tmp/probe-cwd").resolve()
+        self.assertIn("--cwd={}".format(expected_cwd), command)
         self.assertNotIn("--approval-mode=write", command)
         self.assertNotIn("--auto-approve", command)
 
