@@ -428,6 +428,40 @@ class CodexParserTests(unittest.TestCase):
             self.module.parse_codex_jsonl(stream)
 
 
+    def test_parse_codex_jsonl_validates_events_after_the_completed_turn(self):
+        answered = [
+            json.dumps({"type": "item.completed", "item": {"type": "agent_message", "text": "OK"}}),
+            json.dumps({"type": "turn.completed", "usage": {}}),
+        ]
+        trailers = [
+            (
+                "tool-free probe",
+                {"type": "item.started", "item": {"type": "file_change", "id": "i1"}},
+            ),
+            ("late failure", {"type": "error", "message": "late failure"}),
+            ("Codex turn failed", {"type": "turn.failed", "error": {"message": "late failure"}}),
+        ]
+
+        for expected, trailer in trailers:
+            with self.subTest(trailer=trailer["type"]):
+                stream = "\n".join(answered + [json.dumps(trailer)])
+                with self.assertRaisesRegex(ValueError, expected):
+                    self.module.parse_codex_jsonl(stream)
+
+    def test_parse_codex_jsonl_validates_an_item_carried_by_the_completed_turn(self):
+        stream = "\n".join(
+            [
+                json.dumps(
+                    {"type": "item.completed", "item": {"type": "agent_message", "text": "OK"}}
+                ),
+                json.dumps({"type": "turn.completed", "item": {"type": "file_change", "id": "i1"}}),
+            ]
+        )
+
+        with self.assertRaisesRegex(ValueError, "tool-free probe"):
+            self.module.parse_codex_jsonl(stream)
+
+
 class CodexRunTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

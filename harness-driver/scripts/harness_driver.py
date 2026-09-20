@@ -195,7 +195,10 @@ def parse_codex_jsonl(output: str) -> AssistantReply:
         if isinstance(event, dict):
             events.append(event)
 
+    # Scanning past the completed turn is the point: a tool item or a failure that
+    # arrives after it still means the probe was not tool-free.
     answer = None
+    completed = False
     for event in events:
         kind = event.get("type")
         if kind == "turn.failed":
@@ -204,21 +207,24 @@ def parse_codex_jsonl(output: str) -> AssistantReply:
             raise ValueError("Codex turn failed: {}".format(message))
         if kind == "error":
             raise ValueError("Codex reported an error: {}".format(event.get("message")))
+        item = event.get("item")
+        if isinstance(item, dict):
+            item_type = item.get("type")
+            if item_type not in CODEX_PROBE_ITEM_TYPES:
+                raise ValueError(
+                    "Codex used tools during a tool-free probe: {}".format(item_type)
+                )
+            if item_type == "agent_message" and not completed:
+                text = item.get("text")
+                if isinstance(text, str) and text:
+                    answer = text
         if kind == "turn.completed":
             if answer is None:
                 raise ValueError("Codex turn has no agent_message text")
-            return AssistantReply(text=answer, provider=None, model=None, stop_reason=None)
-        item = event.get("item")
-        if not isinstance(item, dict):
-            continue
-        item_type = item.get("type")
-        if item_type not in CODEX_PROBE_ITEM_TYPES:
-            raise ValueError("Codex used tools during a tool-free probe: {}".format(item_type))
-        if item_type == "agent_message":
-            text = item.get("text")
-            if isinstance(text, str) and text:
-                answer = text
-    raise ValueError("Codex output has no turn.completed event")
+            completed = True
+    if not completed:
+        raise ValueError("Codex output has no turn.completed event")
+    return AssistantReply(text=answer, provider=None, model=None, stop_reason=None)
 
 
 def codex_failure_reason(output: str) -> Optional[str]:
