@@ -472,7 +472,6 @@ class CodexParserTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "tool-free probe"):
             self.module.parse_codex_jsonl(stream)
 
-
     def test_parse_codex_jsonl_keeps_a_line_separator_inside_an_answer(self):
         answer = {"type": "item.completed", "item": {"type": "agent_message", "text": "A\u2028B"}}
         stream = "\n".join(
