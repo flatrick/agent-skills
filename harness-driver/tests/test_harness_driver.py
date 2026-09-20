@@ -246,6 +246,23 @@ class HarnessDriverTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "malformed JSON"):
             self.module.parse_omp_jsonl('{"type":"turn_end"')
 
+    def test_parse_omp_jsonl_rejects_tool_results_from_any_turn(self):
+        used_tools = {
+            "type": "turn_end",
+            "message": {"role": "assistant", "content": [{"type": "text", "text": "used a tool"}]},
+            "toolResults": [{"toolCallId": "t1"}],
+        }
+        clean = {
+            "type": "turn_end",
+            "message": {"role": "assistant", "content": [{"type": "text", "text": "OK"}]},
+            "toolResults": [],
+        }
+        terminal = {"type": "agent_end", "isTerminal": True}
+        stream = "\n".join(json.dumps(item) for item in (used_tools, clean, terminal))
+
+        with self.assertRaisesRegex(ValueError, "tool-free probe"):
+            self.module.parse_omp_jsonl(stream)
+
     def test_run_harness_preserves_timeout_output(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)

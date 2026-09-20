@@ -117,7 +117,7 @@ def parse_omp_jsonl(output: str) -> AssistantReply:
     )
     if not terminal:
         raise ValueError("OMP output has no terminal agent_end event after the final turn_end")
-    if turn.get("toolResults"):
+    if any(event.get("toolResults") for event in events):
         raise ValueError("OMP used tools during a tool-free probe")
 
     message = turn.get("message")
