@@ -291,6 +291,34 @@ class HarnessDriverTests(unittest.TestCase):
         self.assertIn('"type": "session"', result.stdout)
         self.assertEqual(result.stderr.strip(), "startup warning")
 
+    def test_run_harness_preserves_output_from_an_expired_final_drain(self):
+        process = mock.Mock()
+        process.communicate.side_effect = [
+            subprocess.TimeoutExpired(
+                ["omp"], 1, output=b"initial stdout", stderr=b"initial stderr"
+            ),
+            subprocess.TimeoutExpired(
+                ["omp"], 5, output=b"stopped stdout", stderr=b"stopped stderr"
+            ),
+            subprocess.TimeoutExpired(
+                ["omp"], 5, output=b"final stdout", stderr=b"final stderr"
+            ),
+        ]
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            with mock.patch.object(self.module.shutil, "which", return_value="/fake/omp"):
+                with mock.patch.object(self.module, "_read_version", return_value=None):
+                    with mock.patch.object(self.module.subprocess, "Popen", return_value=process):
+                        with mock.patch.object(self.module, "_stop_process"):
+                            with mock.patch.object(self.module, "_kill_process"):
+                                result = self.module.run_harness(
+                                    self.request(root, timeout_seconds=1)
+                                )
+
+        self.assertEqual(result.status, self.module.RunStatus.TIMED_OUT)
+        self.assertEqual(result.stdout, "final stdout")
+        self.assertEqual(result.stderr, "final stderr")
+
     def test_run_harness_distinguishes_child_and_protocol_failures(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
@@ -695,6 +723,29 @@ class ProcessTreeTests(unittest.TestCase):
         cls.module = load_module()
 
     @unittest.skipUnless(os.name == "nt", "process-tree teardown is the Windows path")
+    def test_version_timeout_returns_when_a_descendant_still_holds_the_pipes(self):
+        behavior = """
+        pidfile = HERE / "descendant-pids.txt"
+        with open(pidfile, "a", encoding="utf-8") as handle:
+            print(os.getpid(), file=handle)
+        subprocess.Popen([sys.executable, str(HERE / "sleeper.py"), str(pidfile)])
+        time.sleep(120)
+        """
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as raw:
+            root = Path(raw)
+            pidfile = write_sleeping_grandchild(root)
+            executable = write_shim(root, "omp", behavior)
+
+            blocked, box = run_with_deadline(
+                lambda: self.module._read_version(str(executable)), 15
+            )
+            reap(pidfile)
+
+        self.assertFalse(blocked, "_read_version never returned after the timeout")
+        self.assertIsNone(box.get("error"))
+        self.assertIsNone(box["result"])
+
+    @unittest.skipUnless(os.name == "nt", "process-tree teardown is the Windows path")
     def test_timeout_returns_when_a_grandchild_still_holds_the_pipes(self):
         behavior = """
         if "--version" in sys.argv:
@@ -730,6 +781,47 @@ class ProcessTreeTests(unittest.TestCase):
         self.assertFalse(blocked, "run_harness never returned after the timeout")
         self.assertIsNone(box.get("error"))
         self.assertEqual(box["result"].status, self.module.RunStatus.TIMED_OUT)
+
+    @unittest.skipUnless(os.name == "nt", "process-tree teardown is the Windows path")
+    def test_timeout_returns_when_tree_kill_fails_and_a_descendant_holds_the_pipes(self):
+        behavior = """
+        if "--version" in sys.argv:
+            print("omp/18.1.21")
+            raise SystemExit(0)
+        pidfile = HERE / "descendant-pids.txt"
+        with open(pidfile, "a", encoding="utf-8") as handle:
+            print(os.getpid(), file=handle)
+        subprocess.Popen([sys.executable, str(HERE / "sleeper.py"), str(pidfile)])
+        time.sleep(120)
+        """
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as raw:
+            root = Path(raw)
+            pidfile = write_sleeping_grandchild(root)
+            write_shim(root, "omp", behavior)
+            request = self.module.HarnessRequest(
+                harness="omp",
+                prompt="Reply with exactly OK.",
+                timeout_seconds=1,
+                child_cwd=root,
+                model=None,
+            )
+
+            def call():
+                with mock.patch.dict(
+                    os.environ, {"PATH": str(root) + os.pathsep + os.environ["PATH"]}
+                ):
+                    with mock.patch.object(
+                        self.module, "_kill_tree", side_effect=lambda process: process.kill()
+                    ):
+                        return self.module.run_harness(request)
+
+            blocked, box = run_with_deadline(call, 15)
+            reap(pidfile)
+
+        self.assertFalse(blocked, "run_harness blocked draining pipes after tree kill failed")
+        self.assertIsNone(box.get("error"))
+        result = box["result"]
+        self.assertEqual(result.status, self.module.RunStatus.TIMED_OUT)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 import contextlib
+import hashlib
 import importlib.util
 import io
 import json
@@ -133,6 +134,66 @@ class ProbeCliTests(unittest.TestCase):
             request = json.loads((out / "request.json").read_text(encoding="utf-8"))
             self.assertIn("harness_driver.py", request["command_template"][1])
             self.assertIn("--prompt-file", request["command_template"])
+
+    def test_cli_preserves_prompt_bytes_and_hashes_the_written_evidence(self):
+        context_bytes = b"context one\r\ncontext two\rcontext three\r\n"
+        task_bytes = b" task one\r\ntask two\rtask three\r\n"
+        expected_prompt = (
+            b"context one\r\ncontext two\rcontext three\n\n"
+            b"task one\r\ntask two\rtask three"
+        )
+
+        def digest(value):
+            return hashlib.sha256(value).hexdigest()
+
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            fake_bin = root / "bin"
+            fake_bin.mkdir()
+            write_fake_omp(fake_bin)
+            context_path = root / "context.txt"
+            context_path.write_bytes(context_bytes)
+            task_path = root / "task.txt"
+            task_path.write_bytes(task_bytes)
+            out = root / "runs"
+            env = dict(os.environ)
+            env["PATH"] = str(fake_bin) + os.pathsep + env["PATH"]
+
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "--context",
+                    str(context_path),
+                    "--task-file",
+                    str(task_path),
+                    "--runs",
+                    "1",
+                    "--out",
+                    str(out),
+                ],
+                cwd=root,
+                env=env,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertEqual((out / "prompt.txt").read_bytes(), expected_prompt)
+            request = json.loads((out / "request.json").read_text(encoding="utf-8"))
+            manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(request["contexts"][0]["sha256"], digest(context_bytes))
+            self.assertEqual(request["contexts"][0]["bytes"], len(context_bytes))
+            self.assertEqual(request["task_source"]["sha256"], digest(task_bytes))
+            self.assertEqual(request["prompt_sha256"], digest(expected_prompt))
+            self.assertEqual(manifest["prompt_sha256"], digest(expected_prompt))
+
+            module = load_probe_module()
+            task, source = module.load_task(
+                module.argparse.Namespace(task_file=None, task="@{}".format(task_path))
+            )
+            self.assertEqual(task.encode("utf-8"), task_bytes)
+            self.assertEqual(source["sha256"], digest(task_bytes))
 
     def test_cli_refuses_to_overwrite_an_existing_output_directory(self):
         with tempfile.TemporaryDirectory() as raw:

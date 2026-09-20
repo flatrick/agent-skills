@@ -241,9 +241,8 @@ git -C "$work" status --short
 git -C "$work" diff
 ```
 
-The sandbox contains the work.
-An absolute-path write to the home directory was blocked with no file created, so a worktree here is a real boundary rather than only a diff boundary.
-A write to the system temp directory was **not** blocked, because temp is inside the writable set.
+The measured `workspace-write` boundary depended on the destination: a write to the home directory was blocked with no file created, while writes to the working directory and system temp directory were allowed.
+A worktree provides a diff boundary for writes inside it, but it does not contain writes to temp because temp is inside the writable set.
 
 ### The diff may be unreadable, which defeats the point
 
