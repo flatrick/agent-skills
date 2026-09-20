@@ -292,19 +292,29 @@ ADAPTERS = {
 
 def _read_version(executable: str) -> Optional[str]:
     try:
-        completed = subprocess.run(
+        process = subprocess.Popen(
             [executable, "--version"],
             stdin=subprocess.DEVNULL,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             encoding="utf-8",
             errors="replace",
-            timeout=10,
+            start_new_session=(os.name == "posix"),
         )
-    except (OSError, subprocess.TimeoutExpired):
+    except OSError:
         return None
-    if completed.returncode != 0:
+    try:
+        stdout, stderr = process.communicate(timeout=10)
+    except subprocess.TimeoutExpired:
+        try:
+            _kill_process(process)
+            process.communicate(timeout=5)
+        except (OSError, subprocess.TimeoutExpired):
+            pass
         return None
-    version = completed.stdout.strip() or completed.stderr.strip()
+    if process.returncode != 0:
+        return None
+    version = stdout.strip() or stderr.strip()
     return version or None
 
 
@@ -414,9 +424,14 @@ def run_harness(request: HarnessRequest) -> HarnessResult:
         _stop_process(process)
         try:
             stdout, stderr = process.communicate(timeout=5)
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as stop_timeout:
             _kill_process(process)
-            stdout, stderr = process.communicate()
+            try:
+                stdout, stderr = process.communicate(timeout=5)
+            except subprocess.TimeoutExpired as kill_timeout:
+                stdout, stderr = kill_timeout.stdout, kill_timeout.stderr
+            stdout = _text(stdout) or _text(stop_timeout.stdout)
+            stderr = _text(stderr) or _text(stop_timeout.stderr)
         stdout = _text(stdout) or _text(timeout_error.stdout)
         stderr = _text(stderr) or _text(timeout_error.stderr)
         return HarnessResult(
