@@ -89,7 +89,7 @@ def build_omp_command(request: HarnessRequest, executable: str) -> List[str]:
 
 def parse_omp_jsonl(output: str) -> AssistantReply:
     events = []
-    for line in output.splitlines():
+    for line in output.split("\n"):
         stripped = line.strip()
         if not stripped:
             continue
@@ -182,7 +182,7 @@ def build_codex_command(request: HarnessRequest, executable: str) -> List[str]:
 
 def parse_codex_jsonl(output: str) -> AssistantReply:
     events = []
-    for line in output.splitlines():
+    for line in output.split("\n"):
         stripped = line.strip()
         if not stripped:
             continue
@@ -229,7 +229,7 @@ def parse_codex_jsonl(output: str) -> AssistantReply:
 
 def codex_failure_reason(output: str) -> Optional[str]:
     events = []
-    for line in output.splitlines():
+    for line in output.split("\n"):
         stripped = line.strip()
         if not stripped:
             continue

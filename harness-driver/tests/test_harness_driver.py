@@ -263,6 +263,17 @@ class HarnessDriverTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "tool-free probe"):
             self.module.parse_omp_jsonl(stream)
 
+    def test_parse_omp_jsonl_keeps_a_line_separator_inside_an_answer(self):
+        turn = {
+            "type": "turn_end",
+            "message": {"role": "assistant", "content": [{"type": "text", "text": "A\u2028B"}]},
+            "toolResults": [],
+        }
+        terminal = {"type": "agent_end", "isTerminal": True}
+        stream = "\n".join(json.dumps(item, ensure_ascii=False) for item in (turn, terminal))
+
+        self.assertEqual(self.module.parse_omp_jsonl(stream).text, "A\u2028B")
+
     def test_run_harness_preserves_timeout_output(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
@@ -460,6 +471,25 @@ class CodexParserTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "tool-free probe"):
             self.module.parse_codex_jsonl(stream)
+
+
+    def test_parse_codex_jsonl_keeps_a_line_separator_inside_an_answer(self):
+        answer = {"type": "item.completed", "item": {"type": "agent_message", "text": "A\u2028B"}}
+        stream = "\n".join(
+            [
+                json.dumps(answer, ensure_ascii=False),
+                json.dumps({"type": "turn.completed", "usage": {}}),
+            ]
+        )
+
+        self.assertEqual(self.module.parse_codex_jsonl(stream).text, "A\u2028B")
+
+    def test_codex_failure_reason_keeps_a_line_separator_in_the_message(self):
+        stream = json.dumps(
+            {"type": "turn.failed", "error": {"message": "A\u2028B"}}, ensure_ascii=False
+        )
+
+        self.assertEqual(self.module.codex_failure_reason(stream), "A\u2028B")
 
 
 class CodexRunTests(unittest.TestCase):
