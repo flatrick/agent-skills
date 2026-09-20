@@ -29,7 +29,7 @@ def sha256_text(value: str) -> str:
 
 
 def build_prompt(context_paths: Sequence[Path], task: str) -> str:
-    parts = [path.read_text(encoding="utf-8").rstrip("\n") for path in context_paths]
+    parts = [path.read_bytes().decode("utf-8").rstrip("\r\n") for path in context_paths]
     parts.append(task.strip())
     return "\n\n".join(parts)
 
@@ -65,11 +65,11 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
 def load_task(args: argparse.Namespace) -> Tuple[str, dict]:
     if args.task_file:
         path = Path(args.task_file).resolve()
-        value = path.read_text(encoding="utf-8")
+        value = path.read_bytes().decode("utf-8")
         return value, {"kind": "file", "path": str(path), "sha256": sha256_text(value)}
     if args.task.startswith("@"):
         path = Path(args.task[1:]).resolve()
-        value = path.read_text(encoding="utf-8")
+        value = path.read_bytes().decode("utf-8")
         return value, {"kind": "file", "path": str(path), "sha256": sha256_text(value)}
     return args.task, {"kind": "inline", "sha256": sha256_text(args.task)}
 
@@ -178,12 +178,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     context_records = []
     for path in contexts:
-        value = path.read_text(encoding="utf-8")
+        value = path.read_bytes().decode("utf-8")
         context_records.append(
             {"path": str(path), "sha256": sha256_text(value), "bytes": len(value.encode("utf-8"))}
         )
     prompt_path = output_dir / "prompt.txt"
-    prompt_path.write_text(prompt, encoding="utf-8")
+    prompt_path.write_bytes(prompt.encode("utf-8"))
     request_record = {
         "schema_version": SCHEMA_VERSION,
         "created_at": datetime.now(timezone.utc).isoformat(),
