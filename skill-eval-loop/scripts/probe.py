@@ -28,9 +28,25 @@ def sha256_text(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
+def sha256_bytes(value: bytes) -> str:
+    return hashlib.sha256(value).hexdigest()
+
+
+def normalize_newlines(value: str) -> str:
+    return value.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def read_source(path: Path) -> Tuple[str, bytes]:
+    # The same content has to produce the same prompt on every platform, so authored
+    # files are normalised where they enter. prompt.txt is written verbatim after
+    # that, and the recorded hash of each source stays over the bytes on disk.
+    raw = path.read_bytes()
+    return normalize_newlines(raw.decode("utf-8")), raw
+
+
 def build_prompt(context_paths: Sequence[Path], task: str) -> str:
-    parts = [path.read_bytes().decode("utf-8").rstrip("\r\n") for path in context_paths]
-    parts.append(task.strip())
+    parts = [read_source(path)[0].rstrip("\n") for path in context_paths]
+    parts.append(normalize_newlines(task).strip())
     return "\n\n".join(parts)
 
 
@@ -65,13 +81,13 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
 def load_task(args: argparse.Namespace) -> Tuple[str, dict]:
     if args.task_file:
         path = Path(args.task_file).resolve()
-        value = path.read_bytes().decode("utf-8")
-        return value, {"kind": "file", "path": str(path), "sha256": sha256_text(value)}
+        value, raw = read_source(path)
+        return value, {"kind": "file", "path": str(path), "sha256": sha256_bytes(raw)}
     if args.task.startswith("@"):
         path = Path(args.task[1:]).resolve()
-        value = path.read_bytes().decode("utf-8")
-        return value, {"kind": "file", "path": str(path), "sha256": sha256_text(value)}
-    return args.task, {"kind": "inline", "sha256": sha256_text(args.task)}
+        value, raw = read_source(path)
+        return value, {"kind": "file", "path": str(path), "sha256": sha256_bytes(raw)}
+    return normalize_newlines(args.task), {"kind": "inline", "sha256": sha256_text(args.task)}
 
 
 def command_template(args: argparse.Namespace, child_cwd: Path) -> list:
@@ -178,9 +194,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     context_records = []
     for path in contexts:
-        value = path.read_bytes().decode("utf-8")
+        raw = path.read_bytes()
         context_records.append(
-            {"path": str(path), "sha256": sha256_text(value), "bytes": len(value.encode("utf-8"))}
+            {"path": str(path), "sha256": sha256_bytes(raw), "bytes": len(raw)}
         )
     prompt_path = output_dir / "prompt.txt"
     prompt_path.write_bytes(prompt.encode("utf-8"))

@@ -139,8 +139,8 @@ class ProbeCliTests(unittest.TestCase):
         context_bytes = b"context one\r\ncontext two\rcontext three\r\n"
         task_bytes = b" task one\r\ntask two\rtask three\r\n"
         expected_prompt = (
-            b"context one\r\ncontext two\rcontext three\n\n"
-            b"task one\r\ntask two\rtask three"
+            b"context one\ncontext two\ncontext three\n\n"
+            b"task one\ntask two\ntask three"
         )
 
         def digest(value):
@@ -192,8 +192,23 @@ class ProbeCliTests(unittest.TestCase):
             task, source = module.load_task(
                 module.argparse.Namespace(task_file=None, task="@{}".format(task_path))
             )
-            self.assertEqual(task.encode("utf-8"), task_bytes)
+            self.assertEqual(task.encode("utf-8"), b" task one\ntask two\ntask three\n")
             self.assertEqual(source["sha256"], digest(task_bytes))
+
+    def test_prompt_does_not_depend_on_the_line_endings_of_its_sources(self):
+        module = load_probe_module()
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            crlf = root / "crlf.txt"
+            crlf.write_bytes(b"one\r\ntwo\r\n")
+            lf = root / "lf.txt"
+            lf.write_bytes(b"one\ntwo\n")
+
+            from_crlf = module.build_prompt([crlf], "task\r\nline")
+            from_lf = module.build_prompt([lf], "task\nline")
+
+        self.assertEqual(from_crlf, from_lf)
+        self.assertNotIn("\r", from_crlf)
 
     def test_cli_refuses_to_overwrite_an_existing_output_directory(self):
         with tempfile.TemporaryDirectory() as raw:
