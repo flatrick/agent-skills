@@ -75,11 +75,20 @@ Treat a run as complete only when all of these conditions hold:
 
 Read `provider` and `model` from the assistant message instead of asking the model to identify itself.
 This machine has reported two different backends across versions: 18.1.21 reported provider `llama-cpp` with model `Qwen3.6-35B-A3B-IQ4-coder` on 2026-09-14, and 18.2.6 reported provider `openai-codex` with model `gpt-5.5` on 2026-09-19.
+On Windows 11 on 2026-09-20, a live `Reply with exactly OK.` probe through 18.2.6 instead reported provider `local-openai` with model `unsloth/Qwen3.5-9B-MTP-GGUF` and completed in 11.867 seconds.
 The second is a frontier model, so an OMP probe is not automatically the weak-reader test the proving-ground workflow assumes.
 
 An exit code of zero without the terminal events is an invalid result, not an empty answer.
 Keep raw stdout and stderr when parsing fails.
 The maintained runners store the event stream, stderr, extracted answer, and normalized result separately.
+
+## Optional result guards
+
+Pass `--expect-answer "OK"` to require an exact final answer.
+The runner preserves the evidence and records `invalid_output` when the answer differs.
+
+Pass `--require-clean-context` when any adapter warning must reject the result.
+OMP currently emits no ambient-context warning, so the option does not change an OMP result unless a future adapter update adds one.
 
 ## Approval modes for worker tasks
 

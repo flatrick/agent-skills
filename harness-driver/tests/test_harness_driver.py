@@ -15,6 +15,7 @@ from unittest import mock
 
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts" / "harness_driver.py"
+SMOKE_PATH = Path(__file__).resolve().parents[1] / "scripts" / "smoke_harness_driver.py"
 
 
 def load_module():
@@ -195,6 +196,15 @@ class HarnessDriverTests(unittest.TestCase):
         self.assertIn("--cwd={}".format(expected_cwd), command)
         self.assertNotIn("--approval-mode=write", command)
         self.assertNotIn("--auto-approve", command)
+
+    def test_smoke_helper_exposes_the_probe_contract(self):
+        completed = subprocess.run(
+            [sys.executable, str(SMOKE_PATH), "--help"], capture_output=True, text=True
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertIn("--expect-answer", completed.stdout)
+        self.assertIn("--require-clean-context", completed.stdout)
 
     def test_parse_omp_jsonl_returns_last_complete_reply(self):
         first = {
@@ -388,6 +398,27 @@ class HarnessDriverTests(unittest.TestCase):
         self.assertEqual(result.harness_version, "omp/18.1.21")
         self.assertEqual(result.assistant.text, "OK")
         self.assertEqual(result.assistant.provider, "llama-cpp")
+
+    def test_run_harness_rejects_an_unexpected_exact_answer(self):
+        behavior = """
+        message = {
+            'role': 'assistant',
+            'content': [{'type': 'text', 'text': 'NO'}],
+        }
+        print(json.dumps({'type': 'turn_end', 'message': message, 'toolResults': []}))
+        print(json.dumps({'type': 'agent_end', 'isTerminal': True}))
+        """
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            write_fake_omp(root, behavior)
+            with mock.patch.dict(os.environ, {"PATH": str(root) + os.pathsep + os.environ["PATH"]}):
+                result = self.module.run_harness(
+                    self.request(root, expected_answer="OK")
+                )
+
+        self.assertEqual(result.status, self.module.RunStatus.INVALID_OUTPUT)
+        self.assertEqual(result.assistant.text, "NO")
+        self.assertIn("expected exact answer", result.error)
 
 
 class CodexCommandTests(unittest.TestCase):
@@ -711,6 +742,23 @@ class CodexRunTests(unittest.TestCase):
         self.assertIn("AGENTS.md", record["warnings"][0])
         self.assertIn("--ignore-user-config", record["warnings"][0])
         self.assertIn(record["warnings"][0], stderr.getvalue())
+
+    def test_codex_run_rejects_context_warning_when_clean_context_is_required(self):
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as raw:
+            root = Path(raw)
+            write_fake_codex(root, CODEX_COMPLETED_TURN)
+            environment = codex_env(root)
+            (Path(environment["CODEX_HOME"]) / "AGENTS.md").write_text(
+                "MDT for Codex CLI\n", encoding="utf-8"
+            )
+            with mock.patch.dict(os.environ, environment):
+                result = self.module.run_harness(
+                    self.request(root, require_clean_context=True)
+                )
+
+        self.assertEqual(result.status, self.module.RunStatus.CONTEXT_CONTAMINATED)
+        self.assertEqual(result.assistant.text, "OK")
+        self.assertIn("ambient context", result.error)
 
     def test_codex_run_reports_no_warning_when_codex_home_has_no_agents_md(self):
         result, _, _ = self.run_fake(CODEX_COMPLETED_TURN)

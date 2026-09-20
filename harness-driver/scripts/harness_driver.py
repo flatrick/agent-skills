@@ -20,6 +20,7 @@ SCHEMA_VERSION = 1
 
 class RunStatus(str, Enum):
     COMPLETED = "completed"
+    CONTEXT_CONTAMINATED = "context_contaminated"
     CHILD_FAILED = "child_failed"
     TIMED_OUT = "timed_out"
     INVALID_OUTPUT = "invalid_output"
@@ -33,6 +34,8 @@ class HarnessRequest:
     timeout_seconds: int
     child_cwd: Path
     model: Optional[str] = None
+    expected_answer: Optional[str] = None
+    require_clean_context: bool = False
 
 
 @dataclass(frozen=True)
@@ -526,6 +529,36 @@ def run_harness(request: HarnessRequest) -> HarnessResult:
             error=rejection,
             warnings=warnings,
         )
+    if request.expected_answer is not None and assistant.text != request.expected_answer:
+        return HarnessResult(
+            harness=adapter.name,
+            harness_version=version,
+            executable=executable,
+            status=RunStatus.INVALID_OUTPUT,
+            exit_code=process.returncode,
+            duration_ms=duration_ms,
+            assistant=assistant,
+            stdout=stdout,
+            stderr=stderr,
+            error="expected exact answer {!r}, got {!r}".format(
+                request.expected_answer, assistant.text
+            ),
+            warnings=warnings,
+        )
+    if request.require_clean_context and warnings:
+        return HarnessResult(
+            harness=adapter.name,
+            harness_version=version,
+            executable=executable,
+            status=RunStatus.CONTEXT_CONTAMINATED,
+            exit_code=process.returncode,
+            duration_ms=duration_ms,
+            assistant=assistant,
+            stdout=stdout,
+            stderr=stderr,
+            error="probe has ambient context warnings: {}".format("; ".join(warnings)),
+            warnings=warnings,
+        )
     return HarnessResult(
         harness=adapter.name,
         harness_version=version,
@@ -594,6 +627,12 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument("--cwd", required=True, help="Empty or disposable child working directory.")
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument("--model")
+    parser.add_argument("--expect-answer", help="Require an exact assistant answer.")
+    parser.add_argument(
+        "--require-clean-context",
+        action="store_true",
+        help="Reject a completed probe that has ambient-context warnings.",
+    )
     parser.add_argument("--out", required=True, help="New directory for run evidence.")
     args = parser.parse_args(argv)
     if args.timeout <= 0:
@@ -638,6 +677,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             timeout_seconds=args.timeout,
             child_cwd=child_cwd,
             model=args.model,
+            expected_answer=args.expect_answer,
+            require_clean_context=args.require_clean_context,
         )
     )
     try:

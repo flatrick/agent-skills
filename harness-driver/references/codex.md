@@ -69,6 +69,14 @@ A tool-use item is a failed probe, not a partial answer.
 A `turn.failed` message is itself a JSON string.
 Surface it unwrapped rather than parsing it again, because its shape is the provider's, not Codex's.
 
+## Optional result guards
+
+Pass `--expect-answer "OK"` to require an exact final answer.
+The runner preserves the evidence and records `invalid_output` when the answer differs.
+
+Pass `--require-clean-context` when any ambient-context warning must reject the result.
+The runner records `context_contaminated` after the child finishes, preserving the answer and event evidence for review.
+
 ## Default approval posture
 
 `codex exec` does not write files unattended out of the box.

@@ -31,6 +31,18 @@ It disables model tools and removes ambient instructions, but the harness proces
 It is the only way to find out what an instruction actually says to someone who does not already know what it means.
 Reach for worker mode only when the work genuinely needs a separate engine.
 
+## Repeatable smoke check
+
+Run `python3 "<skills-root>/harness-driver/scripts/smoke_harness_driver.py"` to start Codex and OMP sequentially in fresh empty directories.
+It requires the exact answer `OK` and prints the retained evidence directory.
+Use `--require-clean-context` only when a Codex home `AGENTS.md` warning must invalidate the probe.
+
+## Test suite
+
+Run `python3 -m unittest -v harness-driver/tests/test_harness_driver.py` before changing the runner.
+On Windows 11 with Python 3.14.3, this suite ran 39 tests in 74.258 seconds on 2026-09-20 because it exercises timeout and process-tree teardown paths.
+Allow at least 90 seconds and capture the final summary rather than relying on partial dot output.
+
 **Feed it the section, not the whole skill.**
 A weak model handed a long document will echo it back instead of acting on it.
 Measured on 2026-09-14 against OMP's then-configured `Qwen3.6-35B-A3B-IQ4-coder`: given one reference file plus a task, `omp` answered correctly; given that file concatenated with its parent `SKILL.md`, the same model regurgitated the input and never reached the task.
