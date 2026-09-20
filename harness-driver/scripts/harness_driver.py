@@ -7,6 +7,7 @@ import os
 import shutil
 import signal
 import subprocess
+import sys
 import time
 from dataclasses import dataclass
 from enum import Enum
@@ -566,15 +567,21 @@ def result_record(result: HarnessResult) -> dict:
     }
 
 
+def _write_evidence(path: Path, value: str) -> None:
+    # write_text() translates "\n" to the platform separator, so the stored evidence
+    # would differ between Windows and Unix for the same child output.
+    path.write_bytes(value.encode("utf-8"))
+
+
 def write_result(directory: Path, result: HarnessResult) -> None:
     directory.mkdir(parents=True, exist_ok=False)
-    (directory / "events.jsonl").write_text(result.stdout, encoding="utf-8")
-    (directory / "stderr.txt").write_text(result.stderr, encoding="utf-8")
+    _write_evidence(directory / "events.jsonl", result.stdout)
+    _write_evidence(directory / "stderr.txt", result.stderr)
     if result.assistant is not None:
-        (directory / "answer.txt").write_text(result.assistant.text + "\n", encoding="utf-8")
-    (directory / "result.json").write_text(
+        _write_evidence(directory / "answer.txt", result.assistant.text + "\n")
+    _write_evidence(
+        directory / "result.json",
         json.dumps(result_record(result), indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
     )
 
 
@@ -594,7 +601,17 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     return args
 
 
+def _force_utf8_streams() -> None:
+    # A piped stdout defaults to the locale codec, cp1252 on Windows, so a caller
+    # reading this output as UTF-8 gets mojibake or a decode error.
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8")
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
+    _force_utf8_streams()
     args = parse_args(argv)
     output_dir = Path(args.out).resolve()
     if output_dir.exists():

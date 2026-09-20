@@ -129,7 +129,11 @@ def invoke_harness_driver(
     command += ["--out", str(run_dir)]
     try:
         completed = subprocess.run(
-            command, capture_output=True, text=True, timeout=args.timeout + 30
+            command,
+            capture_output=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=args.timeout + 30,
         )
     except subprocess.TimeoutExpired as error:
         raise HarnessDriverInvocationError(
@@ -157,7 +161,16 @@ def invoke_harness_driver(
     return json.loads(result_path.read_text(encoding="utf-8"))
 
 
+def _force_utf8_streams() -> None:
+    # Same reason as harness_driver.py: a piped stdout defaults to the locale codec.
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8")
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
+    _force_utf8_streams()
     args = parse_args(argv)
     output_dir = Path(args.out).resolve()
     if output_dir.exists():
@@ -214,9 +227,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         "prompt_sha256": sha256_text(prompt),
         "command_template": command_template(args, child_cwd),
     }
-    (output_dir / "request.json").write_text(
-        json.dumps(request_record, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
+    (output_dir / "request.json").write_bytes(
+        (json.dumps(request_record, indent=2, sort_keys=True) + "\n").encode("utf-8")
     )
 
     results = []
@@ -267,9 +279,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         "execution_success": completed == len(results),
         "warnings": warnings,
     }
-    (output_dir / "manifest.json").write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
+    (output_dir / "manifest.json").write_bytes(
+        (json.dumps(manifest, indent=2, sort_keys=True) + "\n").encode("utf-8")
     )
     print(
         "wrote {} run(s) to {}; {} execution failure(s)".format(

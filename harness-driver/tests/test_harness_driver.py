@@ -274,6 +274,33 @@ class HarnessDriverTests(unittest.TestCase):
 
         self.assertEqual(self.module.parse_omp_jsonl(stream).text, "A\u2028B")
 
+    def test_write_result_stores_evidence_bytes_unchanged(self):
+        result = self.module.HarnessResult(
+            harness="codex",
+            harness_version="codex-cli 0.155.1",
+            executable="codex",
+            status=self.module.RunStatus.COMPLETED,
+            exit_code=0,
+            duration_ms=1,
+            assistant=self.module.AssistantReply(
+                text="line one\nline two", provider=None, model=None, stop_reason=None
+            ),
+            stdout='{"type":"turn.completed"}\n',
+            stderr="",
+            error=None,
+        )
+
+        with tempfile.TemporaryDirectory() as raw:
+            directory = Path(raw) / "run"
+            self.module.write_result(directory, result)
+            events = (directory / "events.jsonl").read_bytes()
+            answer = (directory / "answer.txt").read_bytes()
+            record = (directory / "result.json").read_bytes()
+
+        self.assertEqual(events, b'{"type":"turn.completed"}\n')
+        self.assertEqual(answer, b"line one\nline two\n")
+        self.assertNotIn(b"\r\n", record)
+
     def test_run_harness_preserves_timeout_output(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
@@ -715,6 +742,37 @@ class CodexRunTests(unittest.TestCase):
 
         self.assertEqual(code, 0)
         self.assertEqual(delivered, exact)
+
+
+    def test_cli_writes_utf8_to_a_pipe_whatever_the_locale_codec_is(self):
+        # A piped Python stdout defaults to the locale codec, cp1252 on Windows, so a
+        # caller reading this output as UTF-8 would get mojibake or a decode error.
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as raw:
+            root = Path(raw)
+            write_fake_codex(root, CODEX_COMPLETED_TURN)
+            out = root / "run-caf\u00e9"
+            environment = dict(os.environ)
+            environment.update(codex_env(root))
+            # Pin a non-UTF-8 child encoding so this proves the script's own
+            # guarantee, not whatever PYTHONIOENCODING the caller happens to export.
+            environment["PYTHONIOENCODING"] = "latin-1"
+            environment.pop("PYTHONUTF8", None)
+            completed = subprocess.run(
+                [
+                    sys.executable, str(MODULE_PATH),
+                    "--harness", "codex",
+                    "--prompt", "Reply with exactly OK.",
+                    "--cwd", str(root),
+                    "--timeout", "30",
+                    "--out", str(out),
+                ],
+                capture_output=True,
+                env=environment,
+            )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertIn("caf\u00e9".encode("utf-8"), completed.stdout)
+        completed.stdout.decode("utf-8")
 
 
 class ProcessTreeTests(unittest.TestCase):

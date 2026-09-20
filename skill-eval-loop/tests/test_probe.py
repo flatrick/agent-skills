@@ -210,6 +210,42 @@ class ProbeCliTests(unittest.TestCase):
         self.assertEqual(from_crlf, from_lf)
         self.assertNotIn("\r", from_crlf)
 
+    def test_cli_survives_non_ascii_in_the_child_output(self):
+        # probe.py reads harness_driver.py's stdout. Both ends have to agree on UTF-8,
+        # or a non-ASCII path arrives as mojibake exactly when something went wrong.
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            fake_bin = root / "bin"
+            fake_bin.mkdir()
+            write_fake_omp(fake_bin)
+            out = root / "runs-caf\u00e9"
+            env = dict(os.environ)
+            env["PATH"] = str(fake_bin) + os.pathsep + env["PATH"]
+            # Pin a non-UTF-8 child encoding so this proves the script's own
+            # guarantee, not whatever PYTHONIOENCODING the caller happens to export.
+            env["PYTHONIOENCODING"] = "latin-1"
+            env.pop("PYTHONUTF8", None)
+
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "--task",
+                    "Reply with exactly OK.",
+                    "--runs",
+                    "1",
+                    "--out",
+                    str(out),
+                ],
+                cwd=root,
+                env=env,
+                capture_output=True,
+            )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertIn("caf\u00e9".encode("utf-8"), completed.stdout)
+        completed.stdout.decode("utf-8")
+
     def test_cli_refuses_to_overwrite_an_existing_output_directory(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
