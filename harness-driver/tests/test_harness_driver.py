@@ -586,6 +586,21 @@ class CodexRunTests(unittest.TestCase):
                 self.assertIn("tool-free probe", result.error)
                 self.assertIn(item_type, result.error)
 
+    def test_codex_run_rejects_a_blocked_tool_attempt_reported_only_on_stderr(self):
+        # A healthy probe leaves stderr empty. The router line appears only when a tool
+        # call was attempted and refused, and it never reaches the JSONL.
+        behavior = CODEX_COMPLETED_TURN + (
+            'print("2026-09-19T17:27:57.269550Z ERROR codex_core::tools::router: "\n'
+            '      "error=patch rejected: writing is blocked by read-only sandbox",\n'
+            "      file=sys.stderr)\n"
+        )
+
+        result, _, _ = self.run_fake(behavior)
+
+        self.assertEqual(result.status, self.module.RunStatus.INVALID_OUTPUT)
+        self.assertIn("blocked tool call", result.error)
+        self.assertIn("codex_core::tools::router", result.stderr)
+
     def test_codex_run_surfaces_a_failed_turn(self):
         behavior = (
             "print(json.dumps({'type': 'turn.started'}))\n"

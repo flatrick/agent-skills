@@ -154,7 +154,10 @@ None of these can be removed from the command line in this version.
 
 This is why the parser rejects the run rather than trusting the flags.
 A probe is tool-free because no tool item appeared in the stream, not because the tools were absent.
-Blocked tool attempts print `ERROR codex_core::tools::router: ...` on stderr only and never appear in the JSONL, so stderr is worth keeping.
+Blocked tool attempts print `ERROR codex_core::tools::router: ...` on stderr only and never appear in the JSONL.
+The runner reads stderr for that line and records the run as invalid rather than completed, so an attempt the sandbox refused cannot pass as a clean probe.
+A healthy probe leaves stderr empty.
+The startup `error` item about code mode being unavailable arrives in the JSONL instead, which is why that item type stays allowed.
 
 ## Ambient instructions that survive
 

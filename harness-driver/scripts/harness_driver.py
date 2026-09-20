@@ -66,6 +66,7 @@ class HarnessAdapter:
     parse_output: Callable[[str], AssistantReply]
     ambient_warnings: Callable[[], List[str]]
     failure_reason: Callable[[str], Optional[str]]
+    stderr_rejection: Callable[[str], Optional[str]]
 
 
 def build_omp_command(request: HarnessRequest, executable: str) -> List[str]:
@@ -258,6 +259,24 @@ def _no_failure_reason(output: str) -> Optional[str]:
     return None
 
 
+CODEX_ROUTER_ERROR = "ERROR codex_core::tools::router:"
+
+
+def codex_stderr_rejection(stderr: str) -> Optional[str]:
+    # A refused tool call is reported here and nowhere else, so a stream that looks
+    # tool-free is not on its own evidence that no tool was reached for.
+    for line in stderr.split("\n"):
+        if CODEX_ROUTER_ERROR in line:
+            return "codex attempted a blocked tool call during a tool-free probe: {}".format(
+                line.strip()
+            )
+    return None
+
+
+def _no_stderr_rejection(stderr: str) -> Optional[str]:
+    return None
+
+
 def codex_ambient_warnings() -> List[str]:
     configured = os.environ.get("CODEX_HOME")
     codex_home = Path(configured) if configured else Path.home() / ".codex"
@@ -283,6 +302,7 @@ ADAPTERS = {
         parse_output=parse_omp_jsonl,
         ambient_warnings=_no_ambient_warnings,
         failure_reason=_no_failure_reason,
+        stderr_rejection=_no_stderr_rejection,
     ),
     "codex": HarnessAdapter(
         name="codex",
@@ -292,6 +312,7 @@ ADAPTERS = {
         parse_output=parse_codex_jsonl,
         ambient_warnings=codex_ambient_warnings,
         failure_reason=codex_failure_reason,
+        stderr_rejection=codex_stderr_rejection,
     ),
 }
 
@@ -472,6 +493,21 @@ def run_harness(request: HarnessRequest) -> HarnessResult:
             stdout=stdout,
             stderr=stderr,
             error=str(error),
+            warnings=warnings,
+        )
+    rejection = adapter.stderr_rejection(stderr)
+    if rejection:
+        return HarnessResult(
+            harness=adapter.name,
+            harness_version=version,
+            executable=executable,
+            status=RunStatus.INVALID_OUTPUT,
+            exit_code=process.returncode,
+            duration_ms=duration_ms,
+            assistant=None,
+            stdout=stdout,
+            stderr=stderr,
+            error=rejection,
             warnings=warnings,
         )
     return HarnessResult(
