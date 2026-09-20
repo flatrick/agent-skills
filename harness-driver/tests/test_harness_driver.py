@@ -650,6 +650,31 @@ class CodexRunTests(unittest.TestCase):
         self.assertEqual(result.warnings, ())
 
 
+    def test_main_sends_prompt_file_bytes_to_the_child_unchanged(self):
+        exact = b"A\r\nB\rC\ncaf\xc3\xa9"
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as raw:
+            root = Path(raw)
+            record = write_fake_codex(root, CODEX_COMPLETED_TURN)
+            prompt_file = root / "prompt.txt"
+            prompt_file.write_bytes(exact)
+            out = root / "run"
+            argv = [
+                "--harness", "codex",
+                "--prompt-file", str(prompt_file),
+                "--cwd", str(root),
+                "--timeout", "30",
+                "--out", str(out),
+            ]
+            with mock.patch.dict(os.environ, codex_env(root)):
+                with contextlib.redirect_stderr(io.StringIO()):
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        code = self.module.main(argv)
+            delivered = (record / "stdin.bin").read_bytes()
+
+        self.assertEqual(code, 0)
+        self.assertEqual(delivered, exact)
+
+
 class ProcessTreeTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

@@ -555,8 +555,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         return 2
     if args.prompt_file:
         try:
-            prompt = Path(args.prompt_file).read_text(encoding="utf-8")
-        except OSError as error:
+            # read_text() translates CRLF and lone CR to LF, which the stdin writer
+            # downstream has no way to restore.
+            prompt = Path(args.prompt_file).read_bytes().decode("utf-8")
+        except (OSError, UnicodeDecodeError) as error:
             print(str(error), file=os.sys.stderr)
             return 2
     else:
