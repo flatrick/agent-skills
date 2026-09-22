@@ -1,0 +1,275 @@
+#!/usr/bin/env python3
+"""Hand a prompt file to Codex for a read-only review of a git worktree.
+
+Unlike harness_driver.py, which runs tool-free probes, a review needs Codex to
+read the repository, so its shell tool stays enabled. The sandbox is always
+read-only: this script has no mode that lets Codex write.
+"""
+
+import argparse
+import json
+import os
+import shutil
+import subprocess
+import sys
+import time
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import List, Optional, Sequence
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from harness_driver import (  # noqa: E402
+    RunStatus,
+    _force_utf8_streams,
+    _kill_process,
+    _stop_process,
+    _text,
+    _write_evidence,
+    codex_failure_reason,
+)
+
+
+@dataclass(frozen=True)
+class ReviewRequest:
+    worktree: Path
+    prompt: str
+    timeout_seconds: int
+    model: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class ReviewResult:
+    status: RunStatus
+    exit_code: Optional[int]
+    duration_ms: int
+    answer: Optional[str]
+    stdout: str
+    stderr: str
+    error: Optional[str]
+
+
+def build_command(request: ReviewRequest, executable: str) -> List[str]:
+    command = [
+        executable,
+        "exec",
+        "--json",
+        "--ephemeral",
+        "--skip-git-repo-check",
+        "-s",
+        "read-only",
+        "-C",
+        str(request.worktree),
+    ]
+    if request.model:
+        command.extend(["-m", request.model])
+    command.append("-")
+    return command
+
+
+def final_answer(output: str) -> str:
+    """Return the last completed agent message of the final turn, which must have completed.
+
+    Tool use is expected. Anything after the final turn.completed other than a new
+    turn means the stream is not a finished run.
+    """
+    answer = None
+    completed = False
+    for line in output.split("\n"):
+        stripped = line.strip()
+        if not stripped.startswith("{"):
+            continue
+        try:
+            event = json.loads(stripped)
+        except ValueError as error:
+            raise ValueError("Codex emitted malformed JSON: {}".format(error))
+        if not isinstance(event, dict):
+            continue
+        kind = event.get("type")
+        if kind == "turn.failed":
+            failure = event.get("error")
+            message = failure.get("message") if isinstance(failure, dict) else None
+            raise ValueError("Codex turn failed: {}".format(message))
+        if kind == "turn.started":
+            answer = None
+            completed = False
+            continue
+        if kind == "turn.completed":
+            completed = True
+            continue
+        if isinstance(kind, str) and kind.startswith("item.") and completed:
+            raise ValueError("Codex emitted {} after turn.completed without a new turn".format(kind))
+        item = event.get("item")
+        if kind == "item.completed" and isinstance(item, dict) and item.get("type") == "agent_message":
+            text = item.get("text")
+            if isinstance(text, str) and text:
+                answer = text
+    if not completed:
+        raise ValueError("Codex output has no turn.completed event")
+    if answer is None:
+        raise ValueError("Codex turn has no agent_message text")
+    return answer
+
+
+def _git(worktree: Path, *args: str) -> str:
+    return subprocess.run(
+        ["git", "-C", str(worktree), *args],
+        check=True,
+        capture_output=True,
+        encoding="utf-8",
+    ).stdout
+
+
+def default_evidence_root(worktree: Path) -> Path:
+    """Main checkout's .scratch/, plus the worktree's name when run from a linked worktree.
+
+    The main checkout is the first entry of `git worktree list --porcelain`, which
+    reports it correctly from inside any linked worktree.
+    """
+    first = _git(worktree, "worktree", "list", "--porcelain").split("\n", 1)[0]
+    if not first.startswith("worktree "):
+        raise ValueError("unexpected git worktree list output: {!r}".format(first))
+    main_checkout = Path(first[len("worktree "):]).resolve()
+    current = Path(_git(worktree, "rev-parse", "--show-toplevel").strip()).resolve()
+    scratch = main_checkout / ".scratch"
+    if current != main_checkout:
+        scratch = scratch / current.name
+    return scratch / "codex"
+
+
+def run_review(request: ReviewRequest, executable: str) -> ReviewResult:
+    started = time.monotonic()
+    try:
+        process = subprocess.Popen(
+            build_command(request, executable),
+            cwd=str(request.worktree),
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            errors="replace",
+            # _stop_process signals the process group on POSIX, which needs its own session.
+            start_new_session=(os.name == "posix"),
+        )
+    except OSError as error:
+        return ReviewResult(RunStatus.LAUNCH_FAILED, None, 0, None, "", "", str(error))
+
+    # Text-mode stdin rewrites "\n" as os.linesep, which would reshape the prompt.
+    process.stdin.reconfigure(newline="")
+    try:
+        stdout, stderr = process.communicate(input=request.prompt, timeout=request.timeout_seconds)
+    except subprocess.TimeoutExpired as timeout_error:
+        stdout, stderr = None, None
+        try:
+            _stop_process(process)
+            stdout, stderr = process.communicate(timeout=5)
+        except (OSError, subprocess.TimeoutExpired):
+            try:
+                _kill_process(process)
+                stdout, stderr = process.communicate(timeout=5)
+            except (OSError, subprocess.TimeoutExpired) as kill_error:
+                # A descendant still holding the pipes keeps communicate() waiting;
+                # report the timeout with whatever output arrived rather than raising.
+                if isinstance(kill_error, subprocess.TimeoutExpired):
+                    stdout, stderr = kill_error.stdout, kill_error.stderr
+        return ReviewResult(
+            RunStatus.TIMED_OUT,
+            None,
+            int((time.monotonic() - started) * 1000),
+            None,
+            _text(stdout) or _text(timeout_error.stdout),
+            _text(stderr) or _text(timeout_error.stderr),
+            "timed out after {}s".format(request.timeout_seconds),
+        )
+
+    duration_ms = int((time.monotonic() - started) * 1000)
+    if process.returncode != 0:
+        error = "codex exited with code {}".format(process.returncode)
+        reason = codex_failure_reason(stdout)
+        if reason:
+            error = "{}: {}".format(error, reason)
+        return ReviewResult(RunStatus.CHILD_FAILED, process.returncode, duration_ms, None, stdout, stderr, error)
+    try:
+        answer = final_answer(stdout)
+    except ValueError as error:
+        return ReviewResult(RunStatus.INVALID_OUTPUT, process.returncode, duration_ms, None, stdout, stderr, str(error))
+    return ReviewResult(RunStatus.COMPLETED, process.returncode, duration_ms, answer, stdout, stderr, None)
+
+
+def write_evidence(directory: Path, prompt: str, worktree: Path, result: ReviewResult) -> None:
+    directory.mkdir(parents=True, exist_ok=False)
+    _write_evidence(directory / "prompt.txt", prompt)
+    _write_evidence(directory / "events.jsonl", result.stdout)
+    _write_evidence(directory / "stderr.txt", result.stderr)
+    if result.answer is not None:
+        _write_evidence(directory / "answer.txt", result.answer + "\n")
+    record = {
+        "worktree": str(worktree),
+        "sandbox": "read-only",
+        "status": result.status.value,
+        "exit_code": result.exit_code,
+        "duration_ms": result.duration_ms,
+        "error": result.error,
+    }
+    _write_evidence(directory / "result.json", json.dumps(record, indent=2, sort_keys=True) + "\n")
+
+
+def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--prompt-file", required=True, help="The handoff: the review request, as a file.")
+    parser.add_argument("--worktree", required=True, help="Git worktree Codex reviews, read-only.")
+    parser.add_argument("--label", default="review", help="Evidence directory name prefix.")
+    parser.add_argument("--out", help="Evidence directory. Default: <main checkout>/.scratch/<worktree>/codex/<label>-<timestamp>.")
+    parser.add_argument("--timeout", type=int, default=900)
+    parser.add_argument("--model")
+    args = parser.parse_args(argv)
+    if args.timeout <= 0:
+        parser.error("--timeout must be positive")
+    return args
+
+
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    _force_utf8_streams()
+    args = parse_args(argv)
+    worktree = Path(args.worktree).resolve()
+    if not worktree.is_dir():
+        print("worktree is not a directory: {}".format(worktree), file=sys.stderr)
+        return 2
+    try:
+        # read_text() translates CRLF and lone CR to LF, which stdin cannot restore.
+        prompt = Path(args.prompt_file).read_bytes().decode("utf-8")
+    except (OSError, UnicodeDecodeError) as error:
+        print(str(error), file=sys.stderr)
+        return 2
+    try:
+        if args.out:
+            out = Path(args.out).resolve()
+        else:
+            stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+            out = default_evidence_root(worktree) / "{}-{}".format(args.label, stamp)
+    except (subprocess.CalledProcessError, ValueError) as error:
+        print("cannot resolve the evidence directory: {}".format(error), file=sys.stderr)
+        return 2
+    if out.exists():
+        print("evidence directory already exists: {}".format(out), file=sys.stderr)
+        return 2
+
+    executable = shutil.which("codex")
+    if executable is None:
+        result = ReviewResult(RunStatus.LAUNCH_FAILED, None, 0, None, "", "", "codex executable not found on PATH")
+    else:
+        result = run_review(ReviewRequest(worktree, prompt, args.timeout, args.model), executable)
+    write_evidence(out, prompt, worktree, result)
+
+    print("{}: {}".format(result.status.value, out))
+    if result.error:
+        print("error: {}".format(result.error))
+    if result.answer is not None:
+        print()
+        print(result.answer)
+    return 0 if result.status is RunStatus.COMPLETED else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -37,6 +37,18 @@ Run `python3 "<skills-root>/harness-driver/scripts/smoke_harness_driver.py"` to 
 It requires the exact answer `OK` and prints the retained evidence directory.
 Use `--require-clean-context` only when a Codex home `AGENTS.md` warning must invalidate the probe.
 
+## Read-only review handoff
+
+To have Codex review a repository, write the request to a prompt file and hand over the file, not an inline script:
+
+`python3 "<skills-root>/harness-driver/scripts/codex_review.py" --prompt-file <file> --worktree <git-worktree> --label <what>`
+
+It runs `codex exec -s read-only` with the prompt on stdin and Codex's shell tool enabled, so Codex can read the tree and cannot write it.
+Evidence (`prompt.txt`, `events.jsonl`, `stderr.txt`, `answer.txt`, `result.json`) goes to the main checkout's `.scratch/<worktree-name>/codex/<label>-<timestamp>/`, or `.scratch/codex/` from the main checkout itself; `--out` overrides it.
+It prints the evidence directory and Codex's final answer, and exits non-zero unless the run completed.
+Write the prompt file inside the supervising session's own worktree: a worktree-isolated Claude Code session refuses both inline heredocs and `Write` calls into the main checkout.
+Its tests are `harness-driver/tests/test_codex_review.py`.
+
 ## Test suite
 
 Run `python3 -m unittest -v harness-driver/tests/test_harness_driver.py` before changing the runner.
