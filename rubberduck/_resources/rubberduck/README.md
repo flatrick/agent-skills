@@ -1,6 +1,6 @@
 # Rubber-duck findings
 
-Stored output of the `/rubberduck` command — an adversarial-by-default brainstorming partner that disagrees,
+Stored output of the `/rubberduck` skill — an adversarial-by-default brainstorming partner that disagrees,
 hunts holes in an idea, then suggests improvements.
 These files are **not** designs, specs, plans, tickets, or a commitment to build anything;
 they only record what was found.
