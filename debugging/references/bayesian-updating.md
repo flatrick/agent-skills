@@ -6,34 +6,65 @@ Do not turn uncertainty into invented precision.
 
 ## Terms
 
-A hypothesis, \(H\), is a testable failure mechanism.
-Evidence, \(E\), is an observation such as a reproduced behavior, trace, metric, or log event.
+A hypothesis is a testable failure mechanism.
+Evidence is an observation such as a reproduced behavior, trace, metric, or log event.
 
-The prior, \(P(H)\), represents the assessment before considering the next observation.
+The prior represents the assessment before considering the next observation.
 It may already include context known at the start of the update, such as local incident rates and a deployment that preceded the symptom.
 
-The likelihood, \(P(E\mid H)\), is the probability of observing the evidence if the hypothesis is true.
-The posterior, \(P(H\mid E)\), is the updated assessment after considering the evidence.
+The likelihood is the probability of observing the evidence if the hypothesis is true.
+The posterior is the updated assessment after considering the evidence.
+Likelihood asks how expected the evidence is under a hypothesis; posterior asks how plausible the hypothesis is after seeing the evidence.
 
 ## Update rules
 
-For mutually exclusive and collectively exhaustive hypotheses, normalize the weighted likelihoods:
+### Several competing hypotheses
 
-\[
-P(H_i\mid E)=\frac{P(E\mid H_i)P(H_i)}{\sum_j P(E\mid H_j)P(H_j)}
-\]
+Use this calculation when exactly one hypothesis can be true and the list covers all possible causes.
+Include an `other or unknown` hypothesis for causes outside the named mechanisms.
+Write probabilities as decimals, such as 0.50 for 50%.
+The priors must add up to 1.
 
-For one hypothesis against its negation, posterior odds equal prior odds multiplied by the likelihood ratio:
+1. For each hypothesis, multiply its prior by its likelihood to get its weight.
+2. Add all the weights to get the total weight.
+3. Divide each hypothesis's weight by the total weight to get its posterior probability.
 
-\[
-\frac{P(H\mid E)}{P(\neg H\mid E)}=
-\frac{P(H)}{P(\neg H)}\times
-\frac{P(E\mid H)}{P(E\mid \neg H)}
-\]
+```text
+weight = prior * likelihood
+posterior probability = weight / total weight
+```
 
-Evidence that appears often during healthy operation has a high \(P(E\mid \neg H)\).
-It provides little support when it is about as likely with the hypothesis as without it.
-The likelihood ratio, not the marginal frequency alone, determines how much the evidence changes the odds.
+Here, `*` means multiply and `/` means divide.
+The posterior probabilities add up to 1, apart from rounding.
+If the total weight is zero, the model cannot explain the observation.
+Revisit the hypotheses and inputs before calculating an update.
+
+### One hypothesis against all alternatives
+
+Compare the hypothesis with the possibility that it is false.
+The alternatives include other failure mechanisms, not just healthy operation.
+
+1. Divide the prior probability that the hypothesis is true by the prior probability that it is false to get the prior odds.
+2. Divide the probability of the evidence when the hypothesis is true by the probability of the evidence when it is false to get the likelihood ratio.
+3. Multiply the prior odds by the likelihood ratio to get the posterior odds.
+4. To convert posterior odds to a probability, divide the posterior odds by the sum of 1 and the posterior odds.
+
+```text
+posterior odds = prior odds * likelihood ratio
+posterior probability = posterior odds / (1 + posterior odds)
+```
+
+For an illustrative model, suppose the prior probability is 20%, so the probability that the hypothesis is false is 80%.
+The prior odds are 0.20 / 0.80 = 0.25, or 1 to 4.
+Suppose the evidence has a probability of 0.60 when the hypothesis is true and 0.10 when it is false.
+The likelihood ratio is 0.60 / 0.10 = 6.
+The posterior odds are 0.25 * 6 = 1.5, and the posterior probability is 1.5 / 2.5 = 60%.
+
+A likelihood ratio above 1 raises the odds, a ratio below 1 lowers them, and a ratio of 1 leaves them unchanged.
+Evidence provides little support when it is about as likely with the hypothesis as without it.
+How often evidence appears during healthy operation alone does not determine the update.
+
+### Limits on numerical updates
 
 Use numerical updates only when the inputs come from measurements, defensible historical rates, or an explicitly labeled model.
 Use qualitative rankings when those inputs do not exist.
