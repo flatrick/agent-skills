@@ -91,6 +91,14 @@ Every measured claim in a `references/*.md` file records the platform, the tool 
 A number measured on Windows says nothing about Linux.
 Stating it without that qualifier is a defect in the document, not a detail.
 
+### The Windows product-name field can report the wrong release
+
+On Windows 11 Home build 26200, `Get-ComputerInfo.WindowsProductName` reported `Windows 10 Home`.
+The field is a compatibility value, not reliable release identification.
+
+Record the operator-confirmed Windows release with the build number.
+Do not relabel a machine from `WindowsProductName` alone.
+
 ## Markdown line breaks
 
 Do not wrap lines just because they're long.
