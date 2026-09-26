@@ -1,0 +1,7 @@
+interface:
+  display_name: "Debugging"
+  short_description: "Diagnose failures with reproducible evidence"
+  default_prompt: "Use $debugging to diagnose this failure without implementing a fix."
+policy:
+  allow_implicit_invocation: true
+
