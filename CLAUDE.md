@@ -79,6 +79,15 @@ That is why the test fakes ship a `.cmd` launcher on Windows and a shebang elsew
 Never hardcode a path separator, a drive letter, or `/tmp`.
 Use `pathlib` and `tempfile`.
 
+### A prompt that starts with a dash is a flag to omp
+
+The omp adapter in `harness-driver/scripts/harness_driver.py` passes the prompt as the last command-line argument, while the Codex adapter sends it on stdin.
+A skill-eval probe whose first context file was a `SKILL.md` began with its `---` frontmatter, and omp rejected every run in about 350 ms with `Error: unknown flag: ---` followed by the whole prompt.
+The result was `child_failed` with exit code 2, which looks like a harness outage, not an input problem.
+
+Until the adapter stops passing the prompt through argv, never let an omp prompt begin with `-`.
+Put a plain-text context file first when the real first file opens with frontmatter.
+
 ### Generating source through a shell heredoc can eat a backslash level
 
 Writing a Python file from a heredoc has silently turned `"\\n"` into a real newline, producing a file that no longer parses.
