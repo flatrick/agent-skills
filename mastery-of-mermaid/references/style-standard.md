@@ -52,7 +52,7 @@ default to birds-eye unless the task is debugging a specific path.
 | Release/migration schedule | `gantt` | Runtime behaviour |
 | Operator steps and pain points | `journey` | Developer debugging |
 | Share of volume, error types | `pie` / `xychart-beta` | Exact routing logic |
-| Root cause of failures | `ishikawa-beta` | Happy-path architecture |
+| Candidate factors behind a failure | `ishikawa-beta` | Happy-path architecture |
 | Overlap of two approaches | `venn-beta` | Single clear answer |
 | Folder/map of docs or components | `mindmap` | Runtime data flow |
 | Git/branch strategy | `gitGraph` | Deployment topology |
@@ -757,6 +757,17 @@ flowchart LR
 
 ---
 
+## Causal-analysis diagrams
+
+Treat causal diagrams as views of an evidence record, not as evidence themselves.
+In timelines, Ishikawa or fishbone maps, causal flowcharts, and fault trees, include a stable claim or hypothesis ID in every node or entry.
+Ishikawa category bones are the one exception: they group claims and carry no ID.
+Use Ishikawa diagrams to organize candidate or evidence-supported contributing factors.
+Do not imply causal proof merely by placing a factor on a branch.
+
+Use Mermaid 11.16 as the compatibility floor for a template set that combines timelines, Ishikawa, causal flowcharts, and fault-tree flowcharts.
+`ishikawa-beta` requires Mermaid 11.12.3 or newer and remains experimental.
+
 ## Detail level ladder
 
 Use the **lowest** rung that answers the reader's question.
@@ -774,7 +785,7 @@ L4  Packet/format diagrams, exact call/line refs  "Byte/layout/exactness"
 |----------|----------------|
 | Component overview | L0-L1 |
 | Component deep-dive | L1-L2 (+ L3 on request) |
-| Incident write-up | L2 + ishikawa |
+| Incident or causal-analysis write-up | L2 plus a timeline, evidence-backed causal flow, or Ishikawa candidate-factor map |
 | Migration / DB doc | L3 ER + L4 as needed |
 | Change/PR description | L2 for behaviour change; L0 if user-visible |
 

@@ -19,6 +19,10 @@ Several examples use newer diagram types (`swimlane-beta`, `ishikawa-beta`, `kan
 **Don't use when:** the reader wants the request path through the services themselves; draw the microservices architecture flowchart in `common-patterns.md` instead.
 **Detail level:** L2
 
+For incident or RCA visuals, distinguish observed events, candidate factors, supported contributing factors, failed controls, and unresolved hypotheses.
+A fishbone groups factors for investigation; it does not prove that a listed factor caused the outcome.
+Put stable claim or hypothesis IDs in every event and factor node so the diagram maps back to its evidence record; fishbone category bones group claims and carry no ID.
+
 <!-- mermaid-render: id="scenario-operations--block1" -->
 ```mermaid
 flowchart LR
@@ -283,7 +287,7 @@ Cut this diagram at the first pod that fails; showing all three adds nothing.
 
 **Answers:** "When did we know, when did we act, and how long was each gap?"
 **Use when:** opening a postmortem document, or reviewing detection and response time.
-**Don't use when:** the reader needs causes rather than order; use the ishikawa example below.
+**Don't use when:** the reader needs contributing factors rather than order; use the ishikawa example below to organize them.
 **Detail level:** L1
 
 <!-- mermaid-render: id="scenario-operations--block6" -->
@@ -291,20 +295,20 @@ Cut this diagram at the first pod that fails; showing all three adds nothing.
 timeline
     accTitle: checkout-api latency incident timeline
     accDescr: The incident ran from first signal at 14h02 through mitigation at 14h47 to all-clear at 15h20, grouped into detection, diagnosis, mitigation, and recovery.
-    title checkout-api latency incident, 2026-04-14
+    title [OUT-001] checkout-api latency incident, 2026-04-14
     section Detection
-        14h02 : p95 crosses 2s, under the 3s alert threshold
-        14h19 : alert fires, on-call paged
-        14h24 : incident declared
+        14h02 : [EVT-001] p95 crosses 2s, under the 3s alert threshold
+        14h19 : [EVT-002] alert fires, on-call paged
+        14h24 : [EVT-003] incident declared
     section Diagnosis
-        14h31 : rollback of release 2026.4.1 ruled out, no deploy in window
-        14h38 : traces show 30s waits on payment-provider
+        14h31 : [OBS-001] rollback of release 2026.4.1 ruled out, no deploy in window
+        14h38 : [OBS-002] traces show 30s waits on payment-provider
     section Mitigation
-        14h47 : client timeout cut to 3s, retries disabled
-        14h55 : p95 back under 800ms
+        14h47 : [EVT-004] client timeout cut to 3s, retries disabled
+        14h55 : [OBS-003] p95 back under 800ms
     section Recovery
-        15h20 : alert clears, all-clear declared
-        16h00 : postmortem scheduled
+        15h20 : [EVT-005] alert clears, all-clear declared
+        16h00 : [EVT-006] postmortem scheduled
 ```
 <img src="rendered/scenario-operations--block6.svg" alt="scenario-operations--block6" width=1400px/>
 
@@ -318,27 +322,28 @@ Rename the sections to your own phases if your process names them differently, b
 
 ### What contributed to the outage
 
-**Answers:** "Why did one slow dependency turn into a 68-minute outage for us?"
-**Use when:** running the postmortem discussion, where the group needs to see that several things had to line up.
+**Answers:** "Which factors may have turned one slow dependency into a 68-minute outage for us, and which does the evidence support?"
+**Use when:** running the postmortem discussion, where the group needs to compare several contributing factors side by side.
 **Don't use when:** there is one cause and one fix; write that sentence in the postmortem, or draw the sequence diagram above if the mechanism is the hard part.
 **Detail level:** L2
 
 <!-- mermaid-render: id="scenario-operations--block7" -->
 ```mermaid
 ishikawa-beta
-    Checkout unavailable for 68 minutes
+    %% Candidate-factor map only. Inclusion does not prove causation.
+    [OUT-001] Checkout unavailable for 68 minutes
     Detection
-        Latency alert threshold set at 3s, above the SLO
-        No alert on connection pool saturation
+        [CF-001] Latency alert threshold set at 3s, above the SLO
+        [HYP-001] No alert on connection pool saturation
     Dependency
-        payment-provider p99 rose to 28s with no status-page notice
-        Client timeout of 30s longer than the whole request budget
+        [OBS-001] payment-provider p99 hit 28s, no status notice
+        [CF-002] Client timeout of 30s longer than the whole request budget
     Code
-        Retries had no budget cap
-        Readiness probe shared the exhausted pool
+        [CF-003] Retries had no budget cap
+        [CF-004] Readiness probe shared the exhausted pool
     Process
-        Runbook had no step for changing a timeout in production
-        Secondary on-call not paged until 10 minutes in
+        [HYP-002] No runbook step for timeouts
+        [HYP-003] Secondary on-call not paged until 10 minutes in
 ```
 <img src="rendered/scenario-operations--block7.svg" alt="scenario-operations--block7" width=500px/>
 
@@ -346,7 +351,9 @@ ishikawa-beta
 Name the head after what the customer lost, not after the alert that fired.
 Use four to six categories.
 `Detection`, `Dependency`, `Code`, and `Process` fit most software incidents; swap in `Data` or `Capacity` when they carry real weight.
-Write contributing factors, not blame; every branch should be something a change could remove.
+Write candidate factors and mark which the evidence supports.
+Inclusion does not prove causation.
+Every branch should map to the analysis record and be something a change could remove.
 If a branch has only one factor and no sub-causes, fold it into a neighbouring category rather than drawing a bone for it.
 
 ---

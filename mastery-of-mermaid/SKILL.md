@@ -1,6 +1,6 @@
 ---
 name: mastery-of-mermaid
-description: Guide for creating, editing, and validating Mermaid diagrams of every kind (flowcharts, sequence, class, state, ER, C4/architecture, Gantt, and 25+ other types), plus scenario playbooks for explaining runtime behaviour, delivery/release process, codebase structure, and operations/incidents at the right detail level. Use whenever a user asks to diagram, visualize, map out, or document a process, system, schema, architecture, timeline, release, or incident as a Mermaid diagram, or to create/update an existing .mmd file or mermaid code block. Harness agnostic - written for any AI coding assistant (Claude Code, Codex, Cursor, Pi, OpenCode, etc.), not tied to one vendor's tools.
+description: Guide for creating, editing, and validating Mermaid diagrams of every kind (flowcharts, sequence, class, state, ER, C4/architecture, Gantt, and 25+ other types), plus scenario playbooks for explaining runtime behaviour, debugging, delivery/release process, codebase structure, and operations/incidents at the right detail level. Covers causal analysis and RCA visuals such as timelines, Ishikawa or fishbone maps, fault trees, and causal diagrams. Use whenever a user asks to diagram, visualize, map out, or document a process, system, schema, architecture, timeline, release, incident, or causal account as a Mermaid diagram, or to create/update an existing .mmd file or mermaid code block. Harness agnostic - written for any AI coding assistant (Claude Code, Codex, Cursor, Pi, OpenCode, etc.), not tied to one vendor's tools.
 ---
 
 # Mastery of Mermaid
@@ -94,7 +94,7 @@ PNG (`-o <filename>.png`) and PDF (`-o <filename>.pdf`) are also supported.
 | Sequence diagram written in code-like syntax | ZenUML | `references/zenuml.md` |
 | Categorizing problems by complexity domain | Cynefin framework | `references/cynefin.md` |
 | Information/event flow over time (DDD-style event modeling) | Event modeling | `references/event-modeling.md` |
-| Root-cause analysis (fishbone) | Ishikawa diagram | `references/ishikawa.md` |
+| Organize candidate or evidence-supported factors for causal analysis or RCA | Ishikawa or fishbone diagram | `references/ishikawa.md` |
 | Formal grammar/syntax documentation (EBNF, ABNF, PEG) | Railroad diagram | `references/railroad.md` |
 | Cross-functional process with clear step ownership | Swimlanes | `references/swimlanes.md` |
 | Directory/file tree | TreeView | `references/tree-view.md` |

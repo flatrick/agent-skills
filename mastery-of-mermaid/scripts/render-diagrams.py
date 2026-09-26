@@ -76,7 +76,9 @@ def summarize_error(raw: str) -> str:
     return "\n".join(kept[:12]).strip()
 
 
-def render(code: str, svg_path: str, artifact_dir: str, block_id: str) -> tuple[bool, str]:
+def render(
+    mmdc: str, code: str, svg_path: str, artifact_dir: str, block_id: str
+) -> tuple[bool, str]:
     """Run mmdc on one block. Returns (ok, summarized error).
 
     On failure the block's .mmd source and the full mmdc log are kept under artifact_dir, so the
@@ -87,7 +89,7 @@ def render(code: str, svg_path: str, artifact_dir: str, block_id: str) -> tuple[
         src = fh.name
     try:
         proc = subprocess.run(
-            ["mmdc", "-i", src, "-o", svg_path], capture_output=True, text=True
+            [mmdc, "-i", src, "-o", svg_path], capture_output=True, text=True
         )
         if proc.returncode == 0:
             return True, ""
@@ -103,7 +105,7 @@ def render(code: str, svg_path: str, artifact_dir: str, block_id: str) -> tuple[
 
 
 def process(
-    md_path: str, skill_dir: str, check_only: bool, force: bool, artifact_dir: str
+    mmdc: str, md_path: str, skill_dir: str, check_only: bool, force: bool, artifact_dir: str
 ) -> tuple[int, list[tuple[str, str, str]]]:
     """Render every block in one markdown file. Returns (total, failures)."""
     with open(md_path, encoding="utf-8") as fh:
@@ -148,7 +150,7 @@ def process(
         target = os.path.join(tempfile.gettempdir(), f"{block_id}.svg") \
             if (check_only or keep_existing) else svg_path
 
-        ok, err = render(code, target, artifact_dir, block_id)
+        ok, err = render(mmdc, code, target, artifact_dir, block_id)
         if not ok:
             failures.append((md_path, block_id, err))
             # Leave a failing block exactly as it was rather than corrupting the doc.
@@ -196,7 +198,10 @@ def main() -> None:
                              "render (default: a mermaid-verify-* folder under the temp dir).")
     args = parser.parse_args()
 
-    if shutil.which("mmdc") is None:
+    # Pass the resolved path, not the bare name: Windows process creation ignores PATHEXT,
+    # so a bare "mmdc" cannot launch npm's mmdc.cmd shim.
+    mmdc = shutil.which("mmdc")
+    if mmdc is None:
         print("mmdc (Mermaid CLI) not found on PATH. "
               "Install it with: npm install -g @mermaid-js/mermaid-cli", file=sys.stderr)
         sys.exit(2)
@@ -218,7 +223,7 @@ def main() -> None:
     total: int = 0
     failures: list[tuple[str, str, str]] = []
     for md in targets:
-        t, f = process(md, skill_dir, args.check, args.force, artifact_dir)
+        t, f = process(mmdc, md, skill_dir, args.check, args.force, artifact_dir)
         total += t
         failures.extend(f)
 
