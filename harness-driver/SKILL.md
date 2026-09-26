@@ -49,6 +49,26 @@ It prints the evidence directory and Codex's final answer, and exits non-zero un
 Write the prompt file inside the supervising session's own worktree: a worktree-isolated Claude Code session refuses both inline heredocs and `Write` calls into the main checkout.
 Its tests are `harness-driver/tests/test_codex_review.py`.
 
+## Worker handoff
+
+To have Codex write code, write the task to a prompt file and run:
+
+`python3 "<skills-root>/harness-driver/scripts/codex_worker.py" --prompt-file <file> --repo <git-worktree> --label <what> --unsandboxed`
+
+It creates a detached throwaway worktree under the main checkout's `.worktrees/`, from `--base` (default `HEAD`), and runs `codex exec -s danger-full-access` there.
+`danger-full-access` means no sandbox: on Windows the `workspace-write` sandbox leaves files the user cannot read (see `references/codex.md`).
+So the script refuses to run without `--unsandboxed`, and you pass that only when the user has agreed to an unsandboxed worker.
+It stages everything and diffs against the base, so `patch.diff` includes commits Codex made.
+`git add -A` skips ignored files, so the ones Codex created are listed in `ignored.txt` instead.
+If any modified, untracked or ignored file in the supervising worktree changes size or mtime during the run, the result gets a warning and the exit code is non-zero.
+So write nothing into the supervising worktree while a worker runs.
+If collecting the diff fails after the run, `result.json` records `collection_error` and the rest of the evidence is still written.
+Evidence (`prompt.txt`, `events.jsonl`, `stderr.txt`, `answer.txt`, `patch.diff`, `status.txt`, `ignored.txt`, `result.json`) goes where the review handoff puts it.
+`patch.diff` holds the staged bytes exactly, including CRLF and non-UTF-8 content.
+The worktree stays in place so you can build and test it; the script prints the command that removes it.
+Pass `--no-project-docs` to keep repository `AGENTS.md` files out of Codex's context.
+Its tests are `harness-driver/tests/test_codex_worker.py`.
+
 ## Test suite
 
 Run `python3 -m unittest -v harness-driver/tests/test_harness_driver.py` before changing the runner.
@@ -95,7 +115,7 @@ The failure is usually a confident wrong instruction, not missing capability.
 | OpenCode | `opencode` | Not implemented as a child harness |
 
 OMP and Codex have executable adapters in this repository, both for proving-ground runs.
-Codex worker mode is documented but not automated.
+Codex worker mode is automated by `scripts/codex_worker.py`.
 Claude Code, Codex, OpenCode, and Pi can supervise either adapter when they can run Python and the child binary.
 Check the binary exists (`command -v <name>`) before planning around it.
 Availability differs per machine.

@@ -127,23 +127,32 @@ def default_evidence_root(worktree: Path) -> Path:
     The main checkout is the first entry of `git worktree list --porcelain`, which
     reports it correctly from inside any linked worktree.
     """
-    first = _git(worktree, "worktree", "list", "--porcelain").split("\n", 1)[0]
-    if not first.startswith("worktree "):
-        raise ValueError("unexpected git worktree list output: {!r}".format(first))
-    main_checkout = Path(first[len("worktree "):]).resolve()
+    main = main_checkout(worktree)
     current = Path(_git(worktree, "rev-parse", "--show-toplevel").strip()).resolve()
-    scratch = main_checkout / ".scratch"
-    if current != main_checkout:
+    scratch = main / ".scratch"
+    if current != main:
         scratch = scratch / current.name
     return scratch / "codex"
 
 
+def main_checkout(worktree: Path) -> Path:
+    first = _git(worktree, "worktree", "list", "--porcelain").split("\n", 1)[0]
+    if not first.startswith("worktree "):
+        raise ValueError("unexpected git worktree list output: {!r}".format(first))
+    return Path(first[len("worktree "):]).resolve()
+
+
 def run_review(request: ReviewRequest, executable: str) -> ReviewResult:
+    return run_codex(build_command(request, executable), request.worktree, request.prompt, request.timeout_seconds)
+
+
+def run_codex(command: List[str], cwd: Path, prompt: str, timeout_seconds: int) -> ReviewResult:
+    """Run a codex exec command with the prompt on stdin and parse its final answer."""
     started = time.monotonic()
     try:
         process = subprocess.Popen(
-            build_command(request, executable),
-            cwd=str(request.worktree),
+            command,
+            cwd=str(cwd),
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -158,7 +167,7 @@ def run_review(request: ReviewRequest, executable: str) -> ReviewResult:
     # Text-mode stdin rewrites "\n" as os.linesep, which would reshape the prompt.
     process.stdin.reconfigure(newline="")
     try:
-        stdout, stderr = process.communicate(input=request.prompt, timeout=request.timeout_seconds)
+        stdout, stderr = process.communicate(input=prompt, timeout=timeout_seconds)
     except subprocess.TimeoutExpired as timeout_error:
         stdout, stderr = None, None
         try:
@@ -180,7 +189,7 @@ def run_review(request: ReviewRequest, executable: str) -> ReviewResult:
             None,
             _text(stdout) or _text(timeout_error.stdout),
             _text(stderr) or _text(timeout_error.stderr),
-            "timed out after {}s".format(request.timeout_seconds),
+            "timed out after {}s".format(timeout_seconds),
         )
 
     duration_ms = int((time.monotonic() - started) * 1000)

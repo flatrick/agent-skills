@@ -234,12 +234,23 @@ The runner does this, and a Windows-only test in `tests/test_harness_driver.py` 
 PowerShell resolves it to `codex.ps1`, while `shutil.which` follows PATHEXT and returns `codex.CMD`.
 They are different programs with different process trees.
 
+**OPEN: a worker run can pop a Windows "How do you want to open this file?" dialog.**
+Seen once, on 2026-09-24 at 11:30, when `codex_worker.py` started `codex exec -s danger-full-access`; the dialog named `session-start`.
+Likely cause, inferred and not reproduced: `~/.codex/config.toml` enables the `pstack@pstack-claude` plugin and trusts its `SessionStart` hook, whose command is `"${CLAUDE_PLUGIN_ROOT}/hooks/session-start"`, a shell script with no extension.
+Claude Code runs it through bash; Codex on Windows appears to hand the bare path to Windows, which has no program for an extensionless file and asks.
+Earlier `codex_review.py` runs, under `-s read-only`, raised no dialog that anyone noticed, which suggests the sandbox level matters; also unverified.
+The worker itself carried on unaffected; the hook just did not run.
+Until fixed: cancel the dialog, and never pick a program or tick "always use this app", which would associate every extensionless file with it.
+Candidate fixes, none chosen: start worker and review runs with the plugin or its hooks disabled through a `codex` config override (check the exact flag against `codex --help` first), or disable the plugin in `~/.codex/config.toml`, which also removes it from interactive Codex.
+
 ## Worker mode
 
-Worker mode is documented here but not automated in `harness_driver.py`.
-The runner only does proving-ground runs.
+`scripts/codex_worker.py` automates worker mode with `-s danger-full-access` in a throwaway git worktree, for the ACL reason below; see `SKILL.md`'s Worker handoff.
+On 2026-09-22, against `codex-cli 0.155.1`, a live run asked to create one file finished in 24 seconds.
+`patch.diff` showed the file, `git add` succeeded, and no warning was raised.
+`harness_driver.py` still does only proving-ground runs.
 
-The recipe is a throwaway git repository and an explicit `-C`:
+The manual recipe is a throwaway git repository and an explicit `-C`:
 
 ```bash
 work="$(mktemp -d)"
