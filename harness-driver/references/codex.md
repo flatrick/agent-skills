@@ -81,7 +81,22 @@ The runner records `context_contaminated` after the child finishes, preserving t
 
 `codex exec` does not write files unattended out of the box.
 With no `-s` flag the banner reports `sandbox: read-only`.
-Approval is `on-request` under the user's config and `never` under `--ignore-user-config`, but neither grants writes while the sandbox is read-only.
+Approval is `on-request` under the user's config and `never` under `--ignore-user-config`.
+
+### A user config can take a read-only run out of the sandbox
+
+Measured on 2026-09-26 against `codex-cli 0.157.1` on Windows 11 Home build 26200, through `scripts/codex_review.py`.
+The user config set `approvals_reviewer = "auto_review"` and `[windows] sandbox = "elevated"`.
+Under `-s read-only`, a `python` command failed inside the sandbox because the sandbox could not start the WindowsApps `python.exe` alias that this machine's Python installation puts on `PATH`.
+That is one of several ways to install Python on Windows, and no other was tested, so do not read this as how Python behaves under the sandbox in general.
+Codex then re-ran the identical command, which succeeded, and reported that the retry ran outside the sandbox.
+The events carried no approval record, and `result.json` still reported `read-only`.
+So `-s read-only` alone does not keep commands inside the sandbox when the user config approves escalations.
+
+`--ignore-user-config` closes that path: the same probe then reported approval policy `never` and made no retry outside the sandbox.
+It also drops `[windows] sandbox = "elevated"`, and without that every command, a plain `Get-Content` included, was rejected with `blocked by policy` before a process started.
+Passing `-c windows.sandbox="elevated"` with `--ignore-user-config` restored sandboxed reads and kept escalation impossible.
+`scripts/codex_review.py` passes both.
 
 ## Sandbox levels
 

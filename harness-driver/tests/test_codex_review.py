@@ -5,6 +5,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts" / "codex_review.py"
@@ -26,12 +27,30 @@ class BuildCommandTests(unittest.TestCase):
         review = load_module()
         request = review.ReviewRequest(Path("C:/repo"), "p", 60, model="gpt-x")
 
-        command = review.build_command(request, "codex")
+        with mock.patch.object(review.sys, "platform", "linux"):
+            command = review.build_command(request, "codex")
 
         self.assertEqual(
             [
-                "codex", "exec", "--json", "--ephemeral", "--skip-git-repo-check",
-                "-s", "read-only", "-C", str(Path("C:/repo")), "-m", "gpt-x", "-",
+                "codex", "exec", "--json", "--ephemeral", "--ignore-user-config",
+                "--skip-git-repo-check", "-s", "read-only", "-C", str(Path("C:/repo")),
+                "-m", "gpt-x", "-",
+            ],
+            command,
+        )
+
+    def test_windows_selects_the_sandbox_the_ignored_user_config_would_have(self):
+        review = load_module()
+        request = review.ReviewRequest(Path("C:/repo"), "p", 60)
+
+        with mock.patch.object(review.sys, "platform", "win32"):
+            command = review.build_command(request, "codex")
+
+        self.assertEqual(
+            [
+                "codex", "exec", "--json", "--ephemeral", "--ignore-user-config",
+                "-c", 'windows.sandbox="elevated"',
+                "--skip-git-repo-check", "-s", "read-only", "-C", str(Path("C:/repo")), "-",
             ],
             command,
         )

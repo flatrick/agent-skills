@@ -44,6 +44,9 @@ To have Codex review a repository, write the request to a prompt file and hand o
 `python3 "<skills-root>/harness-driver/scripts/codex_review.py" --prompt-file <file> --worktree <git-worktree> --label <what>`
 
 It runs `codex exec -s read-only` with the prompt on stdin and Codex's shell tool enabled, so Codex can read the tree and cannot write it.
+It passes `--ignore-user-config`, because a user config that auto-approves escalation requests lets a blocked command re-run outside the sandbox.
+So the user's configured model does not apply; pass `--model` to choose one.
+On Windows it adds `-c windows.sandbox="elevated"`, without which the read-only sandbox rejects every command, reads included.
 Evidence (`prompt.txt`, `events.jsonl`, `stderr.txt`, `answer.txt`, `result.json`) goes to the main checkout's `.scratch/<worktree-name>/codex/<label>-<timestamp>/`, or `.scratch/codex/` from the main checkout itself; `--out` overrides it.
 It prints the evidence directory and Codex's final answer, and exits non-zero unless the run completed.
 Write the prompt file inside the supervising session's own worktree: a worktree-isolated Claude Code session refuses both inline heredocs and `Write` calls into the main checkout.

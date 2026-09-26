@@ -56,12 +56,15 @@ def build_command(request: ReviewRequest, executable: str) -> List[str]:
         "exec",
         "--json",
         "--ephemeral",
-        "--skip-git-repo-check",
-        "-s",
-        "read-only",
-        "-C",
-        str(request.worktree),
+        # A user config can route approval requests to an automatic reviewer, which
+        # re-runs a sandbox-blocked command outside the read-only sandbox.
+        "--ignore-user-config",
     ]
+    if sys.platform == "win32":
+        # Without it the read-only sandbox cannot start on Windows, and every command,
+        # reads included, is rejected by policy.
+        command.extend(["-c", 'windows.sandbox="elevated"'])
+    command.extend(["--skip-git-repo-check", "-s", "read-only", "-C", str(request.worktree)])
     if request.model:
         command.extend(["-m", request.model])
     command.append("-")
