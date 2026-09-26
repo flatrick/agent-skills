@@ -1,0 +1,7 @@
+interface:
+  display_name: "Causal Analysis"
+  short_description: "Analyze evidence-backed causal factors"
+  default_prompt: "Use $causal-analysis to explain the supported causal factors behind this outcome."
+policy:
+  allow_implicit_invocation: true
+
