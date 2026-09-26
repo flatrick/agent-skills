@@ -8,7 +8,10 @@ A hypothesis explains one or more observations and makes a testable prediction.
 A diagnosis identifies a supported failure mechanism and its applicable bounds.
 
 Track at least one plausible alternative until a distinguishing test rules it out.
+Include an `other or unknown` hypothesis so unexplained evidence has somewhere to go.
+If causes can coexist, treat the relevant combination or causal chain as its own hypothesis instead of forcing the causes to compete.
 Prefer tests whose possible outcomes change what you believe.
+State each test's expected outcomes and what each would change before running it.
 A test that every hypothesis predicts adds little.
 
 Use these statuses:

@@ -4,6 +4,10 @@ Preserve safety and customer impact before pursuing a perfect reproduction.
 Prefer read-only queries, existing telemetry, traffic replay into isolated systems, and narrow reversible probes.
 Follow incident and change-control authority; diagnosis does not authorize production mutation.
 
+Do not terminate processes, restart services, change production configuration, deploy code, delete data, or contact customers merely to test a hypothesis.
+If a disruptive action is necessary, state its expected diagnostic value, blast radius, rollback method, and required authorization.
+Wait for that authorization.
+
 Build a request or event path across clients, gateways, services, queues, stores, and external dependencies.
 Record deployment versions, feature flags, routing, retries, timeouts, cancellation, idempotency keys, consistency model, replication lag, and clock uncertainty.
 

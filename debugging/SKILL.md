@@ -1,6 +1,6 @@
 ---
 name: debugging
-description: Diagnose and localize software or system failures through evidence-driven debugging, troubleshooting, reproduction, runtime behavior, and differential tests. Use for unexplained failures and requests to investigate or visualize a failure with an opt-in Mermaid timeline. Also use for bug-fix requests whose defect is not yet evidenced, to challenge the premise and recommend diagnosis before any fix. Do not use to implement a fix whose defect and mechanism are already established.
+description: Diagnose and localize software or system failures through evidence-driven debugging, troubleshooting, reproduction, runtime behavior, and differential tests, including Bayesian ranking of competing hypotheses. Use for unexplained failures and requests to investigate or visualize a failure with an opt-in Mermaid timeline. Also use for bug-fix requests whose defect is not yet evidenced, to challenge the premise and recommend diagnosis before any fix. Do not use to implement a fix whose defect and mechanism are already established.
 ---
 
 # Debugging
@@ -60,6 +60,7 @@ Use the claim schema and report format in [references/record-and-report.md](refe
 Read only the playbooks needed for the failure:
 
 - [Hypotheses and evidence](references/hypotheses-and-evidence.md) for claim strength, competing explanations, and evidence sufficiency.
+- [Bayesian updating](references/bayesian-updating.md) for ranking several plausible mechanisms with priors and likelihoods, quantitatively or qualitatively.
 - [Localization and reduction](references/localization-and-reduction.md) for differential debugging, boundary search, bisection, minimal reproduction, and delta debugging.
 - [Runtime evidence](references/runtime-evidence.md) for debuggers, stacks, logs, traces, profilers, dumps, assertions, and watchpoints.
 - [Flaky and concurrent failures](references/flaky-and-concurrent.md) for intermittent, timing, scheduling, race, and ordering failures.

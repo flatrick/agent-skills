@@ -19,6 +19,8 @@ Create one row or section for every material observation, measurement, hypothesi
 | Limitations | Missing data, observer effects, unsafe tests, or scope bounds |
 | Provenance | Source and a corroboration path for historical or human evidence that cannot be rerun |
 
+Redact credentials, tokens, personal data, and customer content from the record.
+
 Keep commands cross-platform when practical.
 If a procedure is platform-specific, label it and provide the corresponding procedure for other supported platforms or state the limitation.
 
