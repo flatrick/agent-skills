@@ -1,18 +1,19 @@
 ---
 name: "Argue–Measure–Stop"
-description: Phase 0 — settle an idea before any OpenSpec change exists. Interleaves adversarial argument with real measurement (probes, spikes), and stops at a decision memo. Never authors a proposal, design, delta, or task.
+description: Phase 0 — investigate a proposed change to any software before it is designed. Interleaves adversarial argument with real measurement (probes, spikes), and stops at a decision memo that the design starts from. Not tied to any planning, spec, or implementation workflow; never authors the design, a spec, a task, or production code.
 category: Thinking
-tags: [phase-0, adversarial, probe, spike, decision-memo, pre-proposal]
+tags: [phase-0, adversarial, probe, spike, decision-memo, pre-design]
 ---
 
 You are running **phase 0**: settling whether an idea is worth building, and into what shape.
+Phase 1 is whatever comes next in the user's project: designing, specifying, and building the change.
 The identity is the **argue ↔ measure interleaving**, not the arguing.
 
 > **No premise verdict stands on argument alone when a probe could settle it.
 > No measurement is formalized without its meaning being attacked.**
 
 A red team without the measurement loop is confident vibes.
-A measurement loop without the phase contract below is a sixth reviewer inside the machinery this phase exists to stay out of.
+A measurement loop without the phase contract below is one more review step inside the change process this phase exists to stay out of.
 
 **Input**: the idea.
 If invoked with none, ask for one — a single question — and stop until answered.
@@ -23,19 +24,17 @@ If invoked with none, ask for one — a single question — and stop until answe
 
 1. **Output is a decision memo and probe records.
    Nothing else.**
-   No `proposal.md`, no `design.md`, no delta spec, no `tasks.md`, no change directory,
-   no bug file, no backlog item.
+   No proposal, design doc, spec, task list, ticket, or backlog item, in whatever format the project uses.
 2. **Hard stop at a human gate.**
    The session ends at *"here is the memo;
-   the call is yours."* Never roll into `/opsx:propose` in the same conversation — spec authoring is a separate invocation,
-   from the memo, deliberately.
-3. **OpenSpec is strictly downstream and consumes exactly one thing: the memo.**
+   the call is yours."* Never roll into designing or implementing the change in the same conversation — the design is a separate invocation, started from the memo, deliberately.
+3. **Whatever the project uses to design and ship the change is strictly downstream and consumes exactly one thing: the memo.**
+   That may be a spec workflow, a design doc, an issue, or a plain branch; this phase does not care which.
 4. **Rules-light while investigating.**
-   Inside phase 0 the only obligations are: do not touch the `main` checkout,
+   Inside phase 0 the only obligations are: do not modify the user's working tree or main branch (probes and spikes go in a scratch directory, a throwaway branch, or a worktree),
    do not fabricate a result, measure the kill conditions or record why no instrument exists,
    and write the memo.
    TDD, coverage, mutation, review rounds, and disposition machinery all begin at phase 1.
-   This is `.claude/rules/development.md`'s throwaway-exploration permission as the phase *default*.
 
 Why the contract, and not just the stance: once a phase can probe and spike,
 sunk-cost gravity returns — *"we measured all this,
@@ -76,15 +75,16 @@ which argues honestly and never claims to have measured.
 
 **2.
 Prior art** — before any probe of your own.
-Spend a bounded pass on how a shipped tool already solved this: Buildalyzer, OmniSharp, Rider,
-Roslyn's and MSBuild's own test suites, `dotnet-knowledge`'s sources.
+Spend a bounded pass on how shipped tools and libraries in the same domain already solved this: their source, their test suites, their issue trackers, and this project's own history.
 Say plainly what you found and what you could not find.
 
 **3.
 Investigate** — probes and a spike, against the kill conditions.
 
-- Start a probe from `tools/roslyn-probes/_TEMPLATE.cs` / `_TEMPLATE.md`.
-- Probe a **real project**, not only a synthetic fixture.
+- A probe is the smallest runnable thing that settles one kill condition.
+  If the project has a probe template or a probes directory, start from it.
+  Otherwise keep each probe next to the memo, with a record of the command, the input, and the raw output.
+- Probe the **real codebase or real data**, not only a synthetic fixture.
 - A spike is throwaway by construction.
   It is cannibalized deliberately or deleted at phase 1 — never promoted into the implementation.
 
@@ -183,15 +183,14 @@ path/namespace fixes, consolidations, doc and prompt updates.
 Those have no kill conditions worth stating, and forcing the ritual there trains bypass.
 
 **Precedence.**
-In this repository this command supersedes `superpowers:brainstorming` for pre-proposal work;
-do not run both.
-`/opsx:explore` remains correct only for fine-tuning a change that already exists.
+If the project already has a pre-design brainstorming step, run this or that, not both.
+Refining a change that already has a design is not this command's job.
 
 ---
 
 ## What this does NOT do
 
-- Author or edit any OpenSpec artifact, bug file, or backlog item.
+- Author or edit any design, spec, task, ticket, or backlog artifact.
 - Run review rounds, dispositions, or a findings-ledger protocol.
   One memo is the record.
 - Produce production code.
