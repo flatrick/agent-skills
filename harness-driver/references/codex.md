@@ -47,6 +47,13 @@ On stdin a 10 KB multi-line prompt arrives intact, including quotes, a literal `
 Verified end to end on 2026-09-19 by asking Codex to echo a payload line back through the runner.
 The line `PAYLOAD: don't — café — 日本語 — åäö — "quoted" & piped | %TEMP%` came back identical.
 
+The same shim makes any free text unsafe as an argument, not only prompts.
+cmd.exe reparses the arguments, does not understand the `\"` escaping Python's `subprocess` produces, and can end up treating a `&` as a command separator.
+Measured on 2026-09-26 with a stand-in shim of the same shape: a `-c developer_instructions=...` value containing `& 'C:\...\python.exe'` reached node cut off just before the `&`.
+cmd.exe then tried to run the remainder as a command, printed a filename-syntax error, and the run exited 1 although Codex had completed its turn.
+The same value without the `&` arrived intact.
+Keep arguments to fixed flags and values the script controls, and send anything else on stdin.
+
 ## JSONL output and the final answer
 
 `--json` emits a JSONL event stream on stdout.
@@ -97,6 +104,23 @@ So `-s read-only` alone does not keep commands inside the sandbox when the user 
 It also drops `[windows] sandbox = "elevated"`, and without that every command, a plain `Get-Content` included, was rejected with `blocked by policy` before a process started.
 Passing `-c windows.sandbox="elevated"` with `--ignore-user-config` restored sandboxed reads and kept escalation impossible.
 `scripts/codex_review.py` passes both.
+
+### Reaching Python inside the read-only sandbox
+
+Measured on 2026-09-26 against `codex-cli 0.157.1` on Windows 11 Home build 26200, with the flags `scripts/codex_review.py` passes.
+This machine's Python installation puts WindowsApps aliases named `python`, `python3` and `py` on `PATH`.
+That is one of several ways to install Python on Windows, and no other was tested.
+
+| Command inside the sandbox | Result |
+|---|---|
+| `python` or `py`, the WindowsApps aliases | Failed before starting: the sandbox could not access the alias |
+| The full path of the interpreter an alias runs | Worked, including reading a repository file |
+| The full path of a uv-managed interpreter | Worked |
+| `uv run --no-project python` | Failed: uv could not open its cache directory, access denied |
+
+So read-only Python work needed no extra permission, only the interpreter's real path.
+`scripts/codex_review.py` therefore finds the real interpreters before the run and names them in a note ahead of the prompt.
+With that note, a task that only said "use Python" ran the full path with `-B` on the first attempt.
 
 ## Sandbox levels
 

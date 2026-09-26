@@ -47,6 +47,10 @@ It runs `codex exec -s read-only` with the prompt on stdin and Codex's shell too
 It passes `--ignore-user-config`, because a user config that auto-approves escalation requests lets a blocked command re-run outside the sandbox.
 So the user's configured model does not apply; pass `--model` to choose one.
 On Windows it adds `-c windows.sandbox="elevated"`, without which the read-only sandbox rejects every command, reads included.
+Before launching, it asks each Python it can reach (its own interpreter, and `python` and `python3` on `PATH`) which interpreter it really runs.
+It puts a short note with those full paths, versions and how to call one ahead of the prompt on stdin, because a bare `python` may be a launcher the sandbox cannot start.
+The task decides which interpreter to use.
+`prompt.txt` holds the prompt file unchanged, and `stdin.txt` holds exactly what Codex received.
 Evidence (`prompt.txt`, `events.jsonl`, `stderr.txt`, `answer.txt`, `result.json`) goes to the main checkout's `.scratch/<worktree-name>/codex/<label>-<timestamp>/`, or `.scratch/codex/` from the main checkout itself; `--out` overrides it.
 It prints the evidence directory and Codex's final answer, and exits non-zero unless the run completed.
 Write the prompt file inside the supervising session's own worktree: a worktree-isolated Claude Code session refuses both inline heredocs and `Write` calls into the main checkout.

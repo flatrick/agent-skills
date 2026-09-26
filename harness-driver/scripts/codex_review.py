@@ -16,7 +16,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -37,6 +37,7 @@ class ReviewRequest:
     prompt: str
     timeout_seconds: int
     model: Optional[str] = None
+    note: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -69,6 +70,86 @@ def build_command(request: ReviewRequest, executable: str) -> List[str]:
         command.extend(["-m", request.model])
     command.append("-")
     return command
+
+
+def review_stdin(request: ReviewRequest) -> str:
+    """The harness note, if any, then the prompt file's text unchanged.
+
+    The note travels on stdin because the codex.cmd shim hands its arguments to cmd.exe,
+    which splits them at characters such as "&" that paths and commands contain.
+    """
+    if not request.note:
+        return request.prompt
+    return (
+        "[Harness note: facts about this environment, not part of the task]\n"
+        + request.note
+        + "[End of harness note. The task follows.]\n\n"
+        + request.prompt
+    )
+
+
+PythonInterpreter = Tuple[str, str]
+
+
+def python_candidates() -> List[str]:
+    candidates = [sys.executable]
+    for name in ("python", "python3"):
+        found = shutil.which(name)
+        if found:
+            candidates.append(found)
+    return candidates
+
+
+def probe_python(executable: str) -> Optional[PythonInterpreter]:
+    """Ask a candidate which interpreter it runs, which resolves launchers and aliases."""
+    try:
+        process = subprocess.Popen(
+            [executable, "-B", "-c", "import platform, sys; print(sys.executable); print(platform.python_version())"],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            start_new_session=(os.name == "posix"),
+        )
+    except OSError:
+        return None
+    try:
+        stdout, _ = process.communicate(timeout=10)
+    except subprocess.TimeoutExpired:
+        try:
+            _kill_process(process)
+            process.communicate(timeout=5)
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+        return None
+    lines = stdout.decode("utf-8", errors="replace").split("\n")
+    if process.returncode != 0 or len(lines) < 2 or not lines[0].strip():
+        return None
+    return lines[0].strip(), lines[1].strip()
+
+
+def discover_pythons(candidates: Sequence[str], probe=probe_python) -> List[PythonInterpreter]:
+    found = {}
+    for candidate in candidates:
+        interpreter = probe(candidate)
+        if interpreter is not None:
+            found.setdefault(os.path.normcase(interpreter[0]), interpreter)
+    return list(found.values())
+
+
+def python_note(interpreters: Sequence[PythonInterpreter]) -> Optional[str]:
+    """Tell Codex where Python is and how to run it; the task decides which one it needs."""
+    if not interpreters:
+        return None
+    if sys.platform == "win32":
+        call = "& '{}'".format(interpreters[0][0].replace("'", "''"))
+    else:
+        call = "'{}'".format(interpreters[0][0].replace("'", "'\\''"))
+    lines = ["Python interpreters found on this machine before the run:"]
+    lines.extend("- {} (Python {})".format(path, version) for path, version in interpreters)
+    lines.append("Run one by its full path, for example: {} -B -c \"print('ok')\"".format(call))
+    lines.append("A bare `python` or `py` command may resolve to a launcher that cannot start inside the sandbox.")
+    lines.append("The sandbox is read-only: -B stops Python writing bytecode, and tools that write caches, such as uv, fail.")
+    return "\n".join(lines) + "\n"
 
 
 def final_answer(output: str) -> str:
@@ -146,7 +227,7 @@ def main_checkout(worktree: Path) -> Path:
 
 
 def run_review(request: ReviewRequest, executable: str) -> ReviewResult:
-    return run_codex(build_command(request, executable), request.worktree, request.prompt, request.timeout_seconds)
+    return run_codex(build_command(request, executable), request.worktree, review_stdin(request), request.timeout_seconds)
 
 
 def run_codex(command: List[str], cwd: Path, prompt: str, timeout_seconds: int) -> ReviewResult:
@@ -209,9 +290,13 @@ def run_codex(command: List[str], cwd: Path, prompt: str, timeout_seconds: int) 
     return ReviewResult(RunStatus.COMPLETED, process.returncode, duration_ms, answer, stdout, stderr, None)
 
 
-def write_evidence(directory: Path, prompt: str, worktree: Path, result: ReviewResult) -> None:
+def write_evidence(
+    directory: Path, prompt: str, worktree: Path, result: ReviewResult, stdin: Optional[str] = None
+) -> None:
     directory.mkdir(parents=True, exist_ok=False)
     _write_evidence(directory / "prompt.txt", prompt)
+    if stdin is not None:
+        _write_evidence(directory / "stdin.txt", stdin)
     _write_evidence(directory / "events.jsonl", result.stdout)
     _write_evidence(directory / "stderr.txt", result.stderr)
     if result.answer is not None:
@@ -267,12 +352,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print("evidence directory already exists: {}".format(out), file=sys.stderr)
         return 2
 
+    note = python_note(discover_pythons(python_candidates()))
     executable = shutil.which("codex")
+    request = ReviewRequest(worktree, prompt, args.timeout, args.model, note)
     if executable is None:
         result = ReviewResult(RunStatus.LAUNCH_FAILED, None, 0, None, "", "", "codex executable not found on PATH")
     else:
-        result = run_review(ReviewRequest(worktree, prompt, args.timeout, args.model), executable)
-    write_evidence(out, prompt, worktree, result)
+        result = run_review(request, executable)
+    write_evidence(out, prompt, worktree, result, review_stdin(request))
 
     print("{}: {}".format(result.status.value, out))
     if result.error:
