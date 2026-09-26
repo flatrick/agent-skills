@@ -70,8 +70,7 @@ A question about a historical record — what a finished branch cost,
 whether past rounds were avoidable — has no probe surface: the only evidence is the artifacts,
 so the phase silently collapses into reading and reasoning and produces a memo indistinguishable from a measured one.
 If you cannot name an instrument for any kill condition, say so **here**,
-and either reshape the question into one a probe can reach or decline the phase and use `/rubberduck`,
-which argues honestly and never claims to have measured.
+and either reshape the question into one a probe can reach or decline the phase and tell the user that the question can be argued but not measured.
 
 **2.
 Prior art** — before any probe of your own.
@@ -196,6 +195,3 @@ Refining a change that already has a design is not this command's job.
 - Produce production code.
   A probe and a spike are throwaway; neither is a deliverable.
 - Suggest, as a next step, that you do any of the above in this session.
-
-`/rubberduck` is the sibling that argues and cannot measure.
-This one may touch a compiler — and stops at exactly the same place.
