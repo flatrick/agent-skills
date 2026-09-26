@@ -11,7 +11,7 @@ Use a timeline for chronology, an evidence-backed flowchart for supported causal
 
 `ishikawa-beta` requires Mermaid 11.12.3 or newer and remains experimental.
 Validate it against the target renderer before using it in a canonical document.
-The full causal-analysis template set uses Mermaid 11.16 as its compatibility floor.
+A diagram set that combines Ishikawa with timelines, causal flowcharts, or fault-tree flowcharts uses Mermaid 11.16 as its compatibility floor.
 
 **Use for:** organizing candidate or evidence-supported contributing factors for a specific event or problem.
 The type is also called a fishbone, herringbone, or cause-and-effect diagram.
