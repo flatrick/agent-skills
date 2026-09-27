@@ -93,6 +93,35 @@ def reap(pidfile: Path) -> None:
         )
 
 
+def write_stubborn_grandchild(directory: Path) -> Path:
+    # Ignores SIGTERM so a real killpg escalation to SIGKILL is required to free
+    # the pipes it inherited, unlike write_sleeping_grandchild's plain descendant.
+    (directory / "stubborn.py").write_text(
+        "import os\n"
+        "import signal\n"
+        "import sys\n"
+        "import time\n"
+        "signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
+        "with open(sys.argv[1], 'a', encoding='utf-8') as handle:\n"
+        "    print(os.getpid(), file=handle)\n"
+        "time.sleep(120)\n",
+        encoding="utf-8",
+    )
+    return directory / "descendant-pids.txt"
+
+
+def reap_posix(pidfile: Path) -> None:
+    if not pidfile.exists():
+        return
+    import signal as _signal
+
+    for pid in pidfile.read_text(encoding="utf-8").split():
+        try:
+            os.kill(int(pid), _signal.SIGKILL)
+        except (OSError, ValueError):
+            pass
+
+
 CODEX_SHIM_PREFIX = """
 if "--version" in sys.argv:
     print("codex-cli 0.155.1")
@@ -928,6 +957,70 @@ class ProcessTreeTests(unittest.TestCase):
         self.assertIsNone(box.get("error"))
         result = box["result"]
         self.assertEqual(result.status, self.module.RunStatus.TIMED_OUT)
+
+    @unittest.skipUnless(os.name == "posix", "killpg is the POSIX path")
+    def test_posix_version_timeout_returns_when_a_descendant_holds_the_pipes(self):
+        # _kill_process's killpg(SIGKILL) must reach a grandchild through the process
+        # group start_new_session created, not just the shim _read_version launched.
+        behavior = """
+        pidfile = HERE / "descendant-pids.txt"
+        with open(pidfile, "a", encoding="utf-8") as handle:
+            print(os.getpid(), file=handle)
+        subprocess.Popen([sys.executable, str(HERE / "sleeper.py"), str(pidfile)])
+        time.sleep(120)
+        """
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as raw:
+            root = Path(raw)
+            pidfile = write_sleeping_grandchild(root)
+            executable = write_shim(root, "omp", behavior)
+
+            blocked, box = run_with_deadline(
+                lambda: self.module._read_version(str(executable)), 15
+            )
+            reap_posix(pidfile)
+
+        self.assertFalse(blocked, "_read_version never returned after the timeout")
+        self.assertIsNone(box.get("error"))
+        self.assertIsNone(box["result"])
+
+    @unittest.skipUnless(os.name == "posix", "killpg is the POSIX path")
+    def test_posix_timeout_returns_when_a_grandchild_ignores_sigterm(self):
+        # The shim exits on SIGTERM like any normal process; its grandchild ignores
+        # SIGTERM and keeps the inherited pipes open, forcing escalation to SIGKILL.
+        behavior = """
+        if "--version" in sys.argv:
+            print("omp/18.1.21")
+            raise SystemExit(0)
+        pidfile = HERE / "descendant-pids.txt"
+        with open(pidfile, "a", encoding="utf-8") as handle:
+            print(os.getpid(), file=handle)
+        subprocess.Popen([sys.executable, str(HERE / "stubborn.py"), str(pidfile)])
+        time.sleep(120)
+        """
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as raw:
+            root = Path(raw)
+            pidfile = write_stubborn_grandchild(root)
+            write_shim(root, "omp", behavior)
+            request = self.module.HarnessRequest(
+                harness="omp",
+                prompt="Reply with exactly OK.",
+                timeout_seconds=1,
+                child_cwd=root,
+                model=None,
+            )
+
+            def call():
+                with mock.patch.dict(
+                    os.environ, {"PATH": str(root) + os.pathsep + os.environ["PATH"]}
+                ):
+                    return self.module.run_harness(request)
+
+            blocked, box = run_with_deadline(call, 45)
+            reap_posix(pidfile)
+
+        self.assertFalse(blocked, "run_harness never returned after the timeout")
+        self.assertIsNone(box.get("error"))
+        self.assertEqual(box["result"].status, self.module.RunStatus.TIMED_OUT)
 
 
 if __name__ == "__main__":
