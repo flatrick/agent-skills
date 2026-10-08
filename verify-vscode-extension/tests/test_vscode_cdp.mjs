@@ -1,8 +1,13 @@
 // Run with: node --test tests/test_vscode_cdp.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { once } from "node:events";
+import net from "node:net";
 import path from "node:path";
 import {
+  listening,
+  portState,
+  webviewValue,
   chromeArgs,
   chromeCandidates,
   keyEvent,
@@ -56,7 +61,57 @@ test("launch paths are absolute, since a relative extension path is silently ign
 test("a webview expression runs against the inner frame's document", () => {
   const expr = webviewExpression("d.title");
   assert.match(expr, /document\.querySelector\("iframe"\)\?\.contentDocument/);
-  assert.match(expr, /return \(d\.title\)/);
+  assert.match(expr, /d\.title/);
+});
+
+test("a webview expression yielding null or undefined still reports that the webview was reached", () => {
+  const run = (doc, expression) => new Function("document", `return ${webviewExpression(expression)}`)(doc);
+  const withFrame = { querySelector: () => ({ contentDocument: { title: "t" } }) };
+  const withoutFrame = { querySelector: () => null };
+  assert.deepEqual(run(withFrame, "d.title"), { value: "t" });
+  assert.deepEqual(run(withFrame, "d.missing"), { value: undefined });
+  assert.equal(run(withoutFrame, "d.title"), undefined);
+});
+
+test("with several webviews the first non-empty answer wins, and an empty one is still an answer", () => {
+  assert.equal(webviewValue([undefined, { value: null }, { value: "x" }]), "x");
+  assert.equal(webviewValue([{ value: undefined }, { value: null }]), null);
+  assert.throws(() => webviewValue([undefined, undefined]), /no webview had a document/);
+});
+
+/** A port nothing listens on: bind an ephemeral one, then release it. */
+async function freePort() {
+  const s = net.createServer().listen(0, "127.0.0.1");
+  await once(s, "listening");
+  const { port } = s.address();
+  s.close();
+  await once(s, "close");
+  return port;
+}
+
+test("a port is free, answering, or occupied — and occupied never hangs", async () => {
+  const free = await freePort();
+  assert.equal(await portState(free), "free");
+  assert.equal(await listening(free), false);
+
+  const http = (await import("node:http")).createServer((_, res) => res.end("{}")).listen(0, "127.0.0.1");
+  await once(http, "listening");
+  assert.equal(await portState(http.address().port), "answering");
+  http.close();
+
+  // Accepts connections and never answers: what a process that inherited the socket looks like.
+  // Its held connections are destroyed at the end, so a missing timeout fails here instead of hanging.
+  const held = [];
+  const silent = net.createServer((s) => held.push(s)).listen(0, "127.0.0.1");
+  await once(silent, "listening");
+  try {
+    const bound = new Promise((resolve) => setTimeout(resolve, 2000, "no answer within 2s"));
+    assert.equal(await Promise.race([portState(silent.address().port, 300), bound]), "occupied");
+    assert.equal(await listening(silent.address().port), true);
+  } finally {
+    for (const s of held) s.destroy();
+    silent.close();
+  }
 });
 
 test("webview targets are filtered by the extension id in their URL", () => {

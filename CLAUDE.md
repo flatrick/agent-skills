@@ -70,6 +70,22 @@ Both paths have to exist, and neither may be the one nobody tested.
 Every drain after a kill needs its own timeout.
 An unbounded one hangs in the handler written to stop things hanging.
 
+### A port can accept connections and never answer
+
+A listening socket survives its owner when a child inherited it.
+On Ubuntu 20.04 (GNOME on X11, VS Code 1.134), a `dconf watch /system/proxy/` started beside a VS Code window kept that window's DevTools socket after the window closed.
+The kernel still accepted connections into the backlog, so nothing was refused, and nothing ever answered.
+A `close` that polled the port with an unbounded `fetch` never returned — the spek repository's copy of the `verify-vscode-extension` driver, which this one shared that code with — and plain `curl` hung the same way.
+
+Every request to a local port needs a timeout, and "connects but does not answer" is a state of its own, not "down".
+Ask "does anything listen" with a bare TCP connect, separately from "does it answer".
+
+### `pkill -f` matches the shell that runs it
+
+The pattern is part of the command line of the shell running `pkill`, so that shell matches and is killed along with the target.
+It killed a `serve-web` cleanup on Linux (2026-10-06), and on Arch Linux (2026-10-08) the shell that was about to restore a file after a mutation test, leaving the mutation in place.
+Signal a PID or process group you recorded at launch.
+
 ### Windows decides what is executable, and not the way you expect
 
 Windows resolves executables through `PATHEXT`, so an extension-less script is not executable there.

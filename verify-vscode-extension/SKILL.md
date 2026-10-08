@@ -61,7 +61,7 @@ Each prints a run directory (under the system temp directory unless you pass `--
 - **Isolation.** Each instance gets its own profile (desktop: profile and extensions directory; browser-hosted: server data and Chrome profile) inside the run directory, so the operator's VS Code, settings, and extensions are untouched, and `close` shuts down exactly this instance.
 - **`--copy-workspace`** opens a copy, at `<run dir>/workspace`, so anything VS Code writes into a workspace (`.vscode/`) stays out of the repository, and live-reload checks (step 6) can edit it freely.
 - **Paths are made absolute** before they reach VS Code. A relative `--extensionDevelopmentPath` is silently ignored: the window opens without the extension, with no error anywhere.
-- **One instance per port.** Both refuse a DevTools port that already answers; pass `--port` to run a second one, and `--web-port` for a second `serve-web`.
+- **One instance per port.** Both refuse a DevTools port that anything listens on; pass `--port` to run a second one, and `--web-port` for a second `serve-web`. A port that accepts connections but never answers is refused within two seconds, naming how to find what holds it, since VS Code could not bind it (step 9 says how that happens).
 
 Desktop only:
 
@@ -110,7 +110,8 @@ For anything else, put one JavaScript expression in a file and evaluate it; insi
 cdp webview --file check.js
 ```
 
-The expression must return a value — a bare `el.click()` returns `undefined`, which reads as "nothing answered".
+An expression that yields `null` or `undefined` prints `null`: the webview was reached, and what you asked for is not there.
+With several webviews open, the first answer that is not `null` or `undefined` wins.
 Use a file rather than an inline string: the quoting an inline expression needs differs between bash, PowerShell, and cmd.exe.
 
 ### Keyboard
@@ -192,9 +193,15 @@ Text checks cannot see the defects this skill exists for: a background VS Code i
 cdp close
 ```
 
-This sends the DevTools `Browser.close` command, which shuts down the whole isolated desktop instance or the headless Chrome, and waits until its port stops answering.
+This sends the DevTools `Browser.close` command, which shuts down the whole isolated desktop instance or the headless Chrome, waits for its connection to drop, then waits until nothing listens on its port.
 After `launch-web` it also stops the `serve-web` server and everything it started, and waits until the web port is free.
 The run directory is left in place for its screenshots; delete it when done.
+
+If it fails with "the instance closed, but port … accepts connections and never answers", the instance is gone and a process outside it still holds the DevTools socket; a launch on that port would fail.
+Find the holder (Linux: `ss -ltnp`; macOS: `lsof -iTCP:<port> -sTCP:LISTEN`; Windows: `netstat -ano`) and stop it.
+On Ubuntu 20.04 (GNOME on X11, VS Code 1.134, reported by another operator) that holder was a `dconf watch /system/proxy/` started alongside the window and reparented to `systemd --user`, and stopping that one process freed the port.
+It did not happen on Arch Linux with GNOME Shell 51 on Wayland, VS Code 1.141 (2026-10-08); what decides whether the watcher starts is not established.
+Before every request carried a timeout, `close` waited on such a port forever.
 
 Close the instance this way; do not "simplify" it to a kill.
 Measured on Linux, VS Code 1.140.0, 2026-10-06:
@@ -210,6 +217,8 @@ Signalling the desktop window's main process directly would mean finding it by t
 ## Platform notes
 
 Measured on Linux (X11), VS Code 1.140.0, Node 24.14.0, Google Chrome, 2026-10-06: every command above, end to end, on both hosts.
+Re-run on Arch Linux, GNOME Shell 51 on Wayland (VS Code on native Wayland), VS Code 1.141.0, Node 26.11.1, Google Chrome, 2026-10-08: `launch`, `launch-web`, `palette`, `click-link`, `click-app`, `fill`, `rows`, `key`, `type`, `webview`, `tree-rows`, `click-row`, `targets`, `shot` and `close`, against one extension.
+Reported by another operator on Ubuntu 20.04, GNOME on X11, VS Code 1.134, Node 22, running the same steps through the spek repository's copy of this driver rather than this script: the desktop host behaved as written apart from the leaked listener in step 9.
 **Not yet run on Windows or macOS.** What differs there is handled in the script, but unverified:
 
 - **Windows** starts `code.cmd`, which Node can only run through a shell, so each argument is quoted for cmd.exe. The server's own CLI is `code-server.cmd`, run the same way, and `close` stops the server with `taskkill /T /F`. Chrome is looked for under `%ProgramFiles%`, `%ProgramFiles(x86)%` and `%LOCALAPPDATA%`. Whether `serve-web` accepts a Windows path in the URL's `folder=` as given is untested.

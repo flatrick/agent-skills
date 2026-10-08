@@ -7,6 +7,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
+import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -97,9 +98,23 @@ export function launchArgs({ extension, workspace, runDir, port }) {
   ];
 }
 
-/** Wraps an expression so it runs against the document inside the webview's inner frame, bound as `d`. */
+/**
+ * Wraps an expression so it runs against the document inside the webview's inner frame, bound as `d`.
+ * The result is boxed, so an expression yielding null or undefined still says the webview was reached.
+ */
 export function webviewExpression(expression) {
-  return `(() => { const d = document.querySelector("iframe")?.contentDocument; if (!d) return undefined; return (${expression}); })()`;
+  return `(() => { const d = document.querySelector("iframe")?.contentDocument; if (!d) return undefined; return { value: (${expression}) }; })()`;
+}
+
+/**
+ * One answer from the boxed results of several webviews: the first that is not null or undefined, so
+ * an expression naming one webview's element finds it wherever it is; otherwise null, which is a
+ * missing element rather than a missing webview.
+ */
+export function webviewValue(results) {
+  const reached = results.filter(Boolean);
+  if (reached.length === 0) throw new Error("no webview had a document: is it still loading?");
+  return reached.find((r) => r.value !== undefined && r.value !== null)?.value ?? null;
 }
 
 /**
@@ -217,18 +232,64 @@ export function keyEvent(combo) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Every HTTP request is bounded: a port can accept connections and never answer. On Ubuntu 20.04 (GNOME
+// on X11, VS Code 1.134) a `dconf watch /system/proxy/` started beside the window inherited its DevTools
+// socket and outlived it, and an unbounded request there never returned.
+const HTTP_TIMEOUT_MS = 2000;
+
+const occupiedHint = (port) =>
+  `port ${port} accepts connections and never answers DevTools there, as when a process outside VS Code ` +
+  `inherited the socket; find what holds it (Linux: ss -ltnp; macOS: lsof -iTCP:${port} -sTCP:LISTEN; ` +
+  `Windows: netstat -ano) and stop it, or pass --port`;
+
 async function json(port, route) {
-  const res = await fetch(`http://127.0.0.1:${port}${route}`);
-  return res.json();
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}${route}`, { signal: AbortSignal.timeout(HTTP_TIMEOUT_MS) });
+    return await res.json();
+  } catch (e) {
+    if (e.name === "TimeoutError") throw new Error(occupiedHint(port));
+    throw new Error(`nothing answers on port ${port}: is the instance up, with its DevTools port there?`);
+  }
 }
 
-async function reachable(port) {
+/** Whether anything listens on a local TCP port, without speaking HTTP to it. */
+export function listening(port) {
+  return new Promise((resolve) => {
+    const s = net.connect({ port, host: "127.0.0.1" });
+    const done = (v) => {
+      s.destroy();
+      resolve(v);
+    };
+    s.once("connect", () => done(true));
+    s.once("error", () => done(false));
+  });
+}
+
+/**
+ * `free` (nothing listens), `answering` (an HTTP reply came back), or `occupied` (something listens but
+ * gave no reply in time). VS Code cannot bind an occupied port, so a launch there would only time out.
+ */
+export async function portState(port, timeoutMs = HTTP_TIMEOUT_MS) {
   try {
-    await json(port, "/json/version");
-    return true;
+    await fetch(`http://127.0.0.1:${port}/json/version`, { signal: AbortSignal.timeout(timeoutMs) });
+    return "answering";
   } catch {
-    return false;
+    return (await listening(port)) ? "occupied" : "free";
   }
+}
+
+/** Polls until the port is free or the deadline passes; returns the last state seen. */
+async function waitUntilFree(port, ms) {
+  const deadline = Date.now() + ms;
+  let state;
+  while ((state = await portState(port)) !== "free" && Date.now() < deadline) await sleep(500);
+  return state;
+}
+
+async function refuseUnlessFree(port) {
+  const state = await portState(port);
+  if (state === "answering") throw new Error(`port ${port} is already in use: close that instance or pass --port`);
+  if (state === "occupied") throw new Error(occupiedHint(port));
 }
 
 function connect(wsUrl) {
@@ -246,13 +307,14 @@ function connect(wsUrl) {
     ws.onopen = resolve;
     ws.onerror = reject;
   });
+  const closed = new Promise((resolve) => ws.addEventListener("close", resolve));
   const send = (method, params = {}) =>
     new Promise((resolve) => {
       const i = ++id;
       pending.set(i, resolve);
       ws.send(JSON.stringify({ id: i, method, params }));
     });
-  return { ready, send, close: () => ws.close() };
+  return { ready, closed, send, close: () => ws.close() };
 }
 
 async function evaluate(target, expression) {
@@ -334,7 +396,7 @@ function stopServer(state) {
 
 async function answers(url) {
   try {
-    return (await fetch(url, { redirect: "manual" })).status;
+    return (await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(HTTP_TIMEOUT_MS) })).status;
   } catch {
     return 0;
   }
@@ -399,11 +461,9 @@ async function inWebview(port, expression, extensionId) {
         : "no webview is open: open it first, e.g. with palette",
     );
   }
-  for (const t of views) {
-    const value = await evaluate(t, webviewExpression(expression));
-    if (value !== undefined) return value;
-  }
-  throw new Error("no webview returned a value: does the expression return one?");
+  const results = [];
+  for (const t of views) results.push(await evaluate(t, webviewExpression(expression)));
+  return webviewValue(results);
 }
 
 const print = (v) => console.log(typeof v === "string" ? v : JSON.stringify(v, null, 2));
@@ -417,7 +477,7 @@ async function main(argv) {
   switch (command) {
     case "launch": {
       if (!options.extension || !options.workspace) throw new Error("launch needs --extension and --workspace");
-      if (await reachable(port)) throw new Error(`port ${port} is already in use: close that window or pass --port`);
+      await refuseUnlessFree(port);
       const runDir = path.resolve(options["run-dir"] ?? fs.mkdtempSync(path.join(os.tmpdir(), "vscode-verify-")));
       let workspace = options.workspace;
       if (options["copy-workspace"]) {
@@ -441,8 +501,8 @@ async function main(argv) {
     case "launch-web": {
       if (!options.vsix || !options.workspace) throw new Error("launch-web needs --vsix and --workspace");
       const webPort = Number(options["web-port"] ?? DEFAULT_WEB_PORT);
-      if (await reachable(port)) throw new Error(`port ${port} is already in use: close that instance or pass --port`);
-      if (await answers(`http://127.0.0.1:${webPort}/`)) throw new Error(`port ${webPort} is already in use: pass --web-port`);
+      await refuseUnlessFree(port);
+      if (await listening(webPort)) throw new Error(`port ${webPort} is already in use: pass --web-port`);
       const chrome = findExecutable(chromeCandidates(process.platform, process.env, options.chrome));
       if (!chrome) throw new Error("no Chrome or Chromium found: pass --chrome <exe>");
       const runDir = path.resolve(options["run-dir"] ?? fs.mkdtempSync(path.join(os.tmpdir(), "vscode-verify-")));
@@ -481,7 +541,7 @@ async function main(argv) {
         await waitForWorkbench(port, deadline);
         await trustWorkspace(port);
       } catch (e) {
-        if (await reachable(port)) {
+        if ((await portState(port)) === "answering") {
           const c = connect((await json(port, "/json/version")).webSocketDebuggerUrl);
           await c.ready;
           c.send("Browser.close");
@@ -505,21 +565,26 @@ async function main(argv) {
       return;
     }
     case "close": {
-      if (await reachable(port)) {
+      const before = await portState(port);
+      if (before === "occupied") throw new Error(occupiedHint(port));
+      if (before === "answering") {
         const { webSocketDebuggerUrl } = await json(port, "/json/version");
         const c = connect(webSocketDebuggerUrl);
         await c.ready;
         c.send("Browser.close");
-        const deadline = Date.now() + 30_000;
-        while (Date.now() < deadline && (await reachable(port))) await sleep(500);
-        if (await reachable(port)) throw new Error("the window is still up after 30s");
+        // The browser connection dropping is the instance going away. The port is checked after it,
+        // because a listener can outlive the instance and would make the next launch on it fail.
+        await Promise.race([c.closed, sleep(30_000)]);
+        const after = await waitUntilFree(port, 30_000);
+        if (after === "answering") throw new Error("the instance still answers after 30s");
+        if (after === "occupied") throw new Error(`the instance closed, but ${occupiedHint(port)}`);
       }
       if (fs.existsSync(stateFile(port))) {
         const state = JSON.parse(fs.readFileSync(stateFile(port), "utf8"));
         stopServer(state);
         const deadline = Date.now() + 30_000;
-        while (Date.now() < deadline && (await answers(`http://127.0.0.1:${state.webPort}/`))) await sleep(500);
-        if (await answers(`http://127.0.0.1:${state.webPort}/`)) throw new Error(`serve-web still answers on ${state.webPort} after 30s`);
+        while (Date.now() < deadline && (await listening(state.webPort))) await sleep(500);
+        if (await listening(state.webPort)) throw new Error(`something still listens on ${state.webPort} after 30s`);
         fs.rmSync(stateFile(port), { force: true });
       }
       console.log("closed");
@@ -544,12 +609,14 @@ async function main(argv) {
           : `d.querySelector(${lit(args[0])})`;
       const views = webviewTargets(await json(port, "/json/list"), options["extension-id"]);
       for (const t of views) {
-        const box = await evaluate(
-          t,
-          webviewExpression(
-            `(a => a ? (f => (b => [f.x + b.x + Math.min(12, b.width / 2), f.y + b.y + b.height / 2])(a.getBoundingClientRect()))(document.querySelector("iframe").getBoundingClientRect()) : null)(${element})`,
-          ),
-        );
+        const box = (
+          await evaluate(
+            t,
+            webviewExpression(
+              `(a => a ? (f => (b => [f.x + b.x + Math.min(12, b.width / 2), f.y + b.y + b.height / 2])(a.getBoundingClientRect()))(document.querySelector("iframe").getBoundingClientRect()) : null)(${element})`,
+            ),
+          )
+        )?.value;
         if (!box) continue;
         const id = new URL(t.url).searchParams.get("id") ?? "";
         const page = await workbenchPage(port);
