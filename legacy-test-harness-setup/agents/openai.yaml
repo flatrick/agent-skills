@@ -1,0 +1,6 @@
+interface:
+  display_name: "Legacy Test Harness Setup"
+  short_description: "Fast, isolated test loops for legacy code and parallel agents"
+  default_prompt: "Use $legacy-test-harness-setup to survey this repository and set up an isolated, fast test loop that concurrent agents can share."
+policy:
+  allow_implicit_invocation: false

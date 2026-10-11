@@ -95,6 +95,16 @@ That is why the test fakes ship a `.cmd` launcher on Windows and a shebang elsew
 Never hardcode a path separator, a drive letter, or `/tmp`.
 Use `pathlib` and `tempfile`.
 
+### omp tells the model which machine it runs on, whatever the system prompt says
+
+Even with `--no-tools` and a replaced `--system-prompt`, omp 18.9.1 injects the date, the working directory, the host OS and kernel, the architecture, the model name, and a listing of the working directory (Arch Linux, 2026-10-11).
+That leak was found while judging a skill-eval probe set on a Windows workstation, when the question was whether the model had seen `pwsh` installed on the Linux host.
+It had not: shell and installed programs are not injected. The host OS is.
+
+A probe whose scenario names a different OS than the host is not a clean room.
+When an answer follows the host instead of the scenario, suspect this injection before blaming the skill.
+To find out what a harness tells its model, ask it under the probe's own flags to quote its environment context verbatim.
+
 ### A prompt that starts with a dash is a flag to omp
 
 The omp adapter in `harness-driver/scripts/harness_driver.py` passes the prompt as the last command-line argument, while the Codex adapter sends it on stdin.

@@ -45,6 +45,11 @@ The flags isolate different inputs:
 | `--system-prompt` | Pins a minimal system prompt so the probe measures the instructions under test, not OMP's own default agentic framing |
 | `--cwd` | Starts the child in an explicit disposable directory |
 
+These flags do not give the model a clean context either.
+On Arch Linux with OMP 18.9.1 (2026-10-11), a probe run under exactly these flags reported injected context that `--system-prompt` does not remove: a `<system-reminder>` with the date and working directory, and a `<project-context>` holding a `<workstation>` block (host OS and kernel, architecture, model name) and a listing of the working directory.
+The shell and installed programs were not reported.
+So a probe that sets its scenario on another OS ("you are on Windows") competes with a true statement that the host is Linux. Judge such probes with that in mind.
+
 These flags do not make the OMP process read-only.
 OMP 18.1.21 initializes runtime state below `~/.omp` before inference, including its SQLite store and daemon client records.
 A workspace-restricted Codex session must request host permission for the concrete OMP or Python runner command.
