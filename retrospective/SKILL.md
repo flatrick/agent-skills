@@ -1,6 +1,6 @@
 ---
 name: "Process Retrospective"
-description: Author a run's process retrospective — re-derive evidence, classify KEEP/FIX/WATCH, enact the cheap fixes, self-review, and optionally verify claims with a cold-context pass. Writes one dated retrospective file (plus any FIX edits it marks done); stops at a human gate. Repo-agnostic — uses this repo's own conventions when it has them, and sane defaults otherwise.
+description: Author a run's process retrospective — re-derive evidence, classify KEEP/FIX/WATCH, propose fixes for the operator to approve, self-review, and optionally verify claims with a cold-context pass. Writes one dated retrospective file; stops at a human gate. Repo-agnostic — uses this repo's own conventions when it has them, and sane defaults otherwise.
 category: QA
 tags: [retrospective, quality-playbook, process, workflow]
 ---
@@ -37,7 +37,7 @@ A measured fact belongs in one place; every copy of it is a future lie.
 
 Turn a completed run into an honest process retrospective: what the *supporting machinery* (rules,
 skills, commands, agents, tools, harness) did well or badly, rated **KEEP / FIX / WATCH**,
-with the cheap high-value fixes enacted in the same run.
+with each fix proposed for the operator to approve.
 
 This skill is self-contained: it carries its own doctrine (naming convention, rating scheme,
 principles) below,
@@ -53,10 +53,11 @@ If omitted, infer it in Step 1 and confirm.
 ## Doctrine (fallback, if this repo has none of its own)
 
 **When to write one.**
-Write a retrospective when the run ended an autonomous or multi-step execution,
-ended a change that surfaced a reusable lesson, or hit friction, a near-miss,
-or a discipline lesson worth not relearning.
-Skip it — and say so — when the run was trivial and surfaced nothing new about the tooling or workflow.
+Write a retrospective only when the operator asks for one,
+or after a multi-change autonomous run.
+A single change, however it ended, does not trigger one.
+Skip it — and say so — when neither holds,
+or when the run was trivial and surfaced nothing new about the tooling or workflow.
 
 **Naming.**
 One file per retrospective: `<output-dir>/<timestamp>_<suffix>.md`,
@@ -67,23 +68,22 @@ timestamp from `date '+%Y-%m-%d_%H.%M.%S.%N_%Z'`, `<suffix>` = the change, umbre
   Say why, with the proof.
 - **FIX** — an actionable change.
   Name the concrete fix and the rule / agent / skill / script it touches;
-  mark **(done this run)** / **(follow-up)** / **(file a bug)**.
+  mark **(proposed)** / **(file a bug)**.
 - **WATCH** — friction not yet worth a change.
   Note what recurrence would justify acting,
   and whether it's fixable in-repo or is a harness-level limitation.
 
-**Enact, don't just log.**
-A FIX that is cheap and in-repo gets made in the same run, not filed for later.
+**Propose, don't enact.**
+A retrospective never edits a rule, agent, skill, command, or script.
+Each FIX states the exact edit, and the operator decides.
 
 ---
 
 ## Mutation boundary — what this writes
 
 - **The retrospective file** — exactly one, under `<output-dir>` (see Step 1 for how to pick it).
-- **Cheap in-repo FIX edits it explicitly enacts** — a one-line rule,
-  an agent's definition-of-done, a script tweak — each marked **(done this run)** in the file.
-  This is the only reason the skill writes beyond the retro file itself.
-
+It does **not** edit rules, agents, skills, commands, or scripts:
+each FIX is a proposal marked **(proposed)** in the file, and the operator approves it before anyone makes the edit.
 It does **not** commit, merge, switch branches, file issues, or author spec changes.
 The retrospective is normally committed alongside the run's other work — leave that to the owner or the run's own commit step,
 unless explicitly asked to commit.
@@ -96,8 +96,9 @@ not on the repo's main/default branch —** unless that branch has already been 
 ## Step 0 — Is a retrospective warranted?
 
 Per the doctrine above (this repo's own, if it has one):
-if the run was trivial and surfaced nothing new about the tooling or workflow,
+if the operator did not ask for a retrospective and the run was not a multi-change autonomous run,
 **stop and say so** — no file.
+Also stop if the run was trivial and surfaced nothing new about the tooling or workflow.
 Otherwise proceed.
 
 ---
@@ -141,8 +142,8 @@ If `gh` isn't available or there's no GitHub remote, or the PR metadata is ambig
 ask the user whether the branch is already merged rather than guessing.
 
 If the run has merged to the default branch,
-write the retrospective and any enacted FIX edits there.
-Otherwise write both on the run's own branch/worktree, using paths relative to that checkout.
+write the retrospective there.
+Otherwise write it on the run's own branch/worktree, using paths relative to that checkout.
 
 Seed the header **immediately** via **Write** so a file exists even if the run aborts:
 
@@ -234,12 +235,12 @@ a prevented wrong fix, a wall-clock win), not a vibe.
 
 ---
 
-## Step 5 — Enact the cheap, high-value FIXes now
+## Step 5 — Propose the FIXes for the operator to approve
 
-For each FIX that is a small, in-repo edit (a rule line, an agent's definition-of-done, a script),
-**make it this run** and mark it **(done this run)** in the file.
-Larger fixes become **(follow-up)** or **(file a bug)**.
-The log is a record of action, not a wishlist.
+For each FIX, state the exact edit and the file it touches, and mark it **(proposed)** in the file.
+Do not make the edit.
+The operator approves each proposal before anyone edits a rule, agent, skill, command, or script.
+A fix that needs a defect report becomes **(file a bug)**.
 
 ---
 
@@ -277,12 +278,12 @@ and should never be presented as one.
 
 ## Step 8 — STOP
 
-Print the file path and a one-line KEEP / FIX / WATCH tally (and which FIXes were enacted this run),
+Print the file path and a one-line KEEP / FIX / WATCH tally,
 then **stop**.
 Do not commit unless the owner asks.
 
 > Retrospective written: `<output-dir>/<file>`.
-> KEEP <k> / FIX <f> (<d> done this run) / WATCH <w>.
+> KEEP <k> / FIX <f> (all proposed, none enacted) / WATCH <w>.
 > Cold-verify: <ran | skipped>.
 > Recurrences: <none | the items found in prior retrospectives, and which graduated to FIX>.
 
