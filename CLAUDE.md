@@ -1,5 +1,23 @@
 # Repo conventions
 
+## Text output
+
+Write text following ASD-STE100 Simplified Technical English in this repository:
+- Write instructions of 20 words maximum.
+- Write descriptions of 25 words maximum.
+- Write one instruction in one sentence.
+- Use the imperative, the active voice, and the simple tenses.
+- Use one word for one meaning.
+- Use the same term for the same thing each time.
+- Do not use idioms, slang, or phrasal verbs.
+- Keep "a", "the", and "that".
+- Write a paragraph of 6 sentences maximum.
+- Put a warning or caution before the next step that it applies to.
+- Do not change code, commands, identifiers, paths, product names, error messages, or quoted text.
+- Do not change the normative keywords `SHALL`, `MUST`, and `SHOULD` for requirements
+- In Markdown, write one sentence on one line.
+- The rule applies to text that you write or edit.
+
 ## Cross-platform support
 
 **Every skill and script in this repository must work on Windows and on Unix — Linux and macOS alike.**
